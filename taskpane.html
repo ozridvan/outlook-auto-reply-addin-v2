@@ -279,6 +279,11 @@
         
         <div id="statusMessage" class="status-message" style="display: none;"></div>
         
+        <!-- Version Information -->
+        <div style="text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e1dfdd; font-size: 12px; color: #605e5c;">
+            <span id="versionInfo">Sürüm: 1.0.0 | Son Güncelleme: <span id="lastUpdate"></span></span>
+        </div>
+        
         <div id="instructionsModal" class="modal" style="display: none;">
             <div class="modal-content">
                 <h3>📋 Otomatik Yanıt Ayarlama Talimatları</h3>
@@ -288,6 +293,12 @@
         </div>
     </div>
 
-    <script src="taskpane.js"></script>
+    <script>
+        // Cache-busting for JS file
+        const timestamp = new Date().getTime();
+        const script = document.createElement('script');
+        script.src = 'taskpane.js?v=' + timestamp;
+        document.head.appendChild(script);
+    </script>
 </body>
 </html>
