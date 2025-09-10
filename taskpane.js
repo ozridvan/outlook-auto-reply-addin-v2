@@ -468,6 +468,7 @@ function toLocalNaive(dt) {
         if (res.status !== Office.AsyncResultStatus.Succeeded) {
           return reject(res.error);
         }
+        console.log("setOOFViaEws result",res)
         const xml = new DOMParser().parseFromString(res.value, "text/xml");
         const code = xml.getElementsByTagNameNS(M, "ResponseCode")[0]?.textContent;
         const text = xml.getElementsByTagNameNS(M, "MessageText")[0]?.textContent || "";
