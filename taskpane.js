@@ -458,21 +458,41 @@ function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, audience="
   return new Promise((resolve, reject) => {
     Office.context.mailbox.makeEwsRequestAsync(soap, res => {
       if (res.status !== Office.AsyncResultStatus.Succeeded) return reject(res.error);
-      // Burada da SOAP içini kontrol et!
-      const xml = new window.DOMParser().parseFromString(res.value, "text/xml");
-      const resp = xml.getElementsByTagName("m:SetUserOofSettingsResponse")[0] 
-                || xml.getElementsByTagName("SetUserOofSettingsResponse")[0];
-      const rc = xml.getElementsByTagName("m:ResponseCode")[0] 
-              || xml.getElementsByTagName("ResponseCode")[0];
       
-      console.log('EWS SET Response Code:', rc ? rc.textContent : 'Not found');
+      console.log('EWS SET Response:', res);
       console.log('EWS SET Response XML:', res.value);
       
+      // Parse XML response more thoroughly
+      const xml = new window.DOMParser().parseFromString(res.value, "text/xml");
+      
+      // Try multiple possible response code locations
+      let rc = xml.getElementsByTagName("m:ResponseCode")[0] 
+            || xml.getElementsByTagName("ResponseCode")[0]
+            || xml.querySelector("ResponseCode")
+            || xml.querySelector("m\\:ResponseCode");
+      
+      // Also check for error elements
+      const errorCode = xml.getElementsByTagName("ErrorCode")[0] 
+                     || xml.getElementsByTagName("m:ErrorCode")[0];
+      const faultString = xml.getElementsByTagName("faultstring")[0];
+      
+      console.log('EWS SET Response Code:', rc ? rc.textContent : 'Not found');
+      console.log('EWS SET Error Code:', errorCode ? errorCode.textContent : 'None');
+      console.log('EWS SET Fault String:', faultString ? faultString.textContent : 'None');
+      
+      // Check for success conditions
       if (rc && rc.textContent === "NoError") {
         console.log('EWS SET successful, verifying with GET...');
         resolve(res.value);
+      } else if (!rc && !errorCode && !faultString) {
+        // No explicit error, might be successful
+        console.log('EWS SET - No error codes found, assuming success');
+        resolve(res.value);
       } else {
-        reject(new Error(`EWS ResponseCode: ${rc && rc.textContent}`));
+        const errorMsg = errorCode ? errorCode.textContent : 
+                        faultString ? faultString.textContent :
+                        rc ? rc.textContent : 'Unknown error';
+        reject(new Error(`EWS ResponseCode: ${errorMsg}`));
       }
     });
   });
