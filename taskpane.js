@@ -1,4 +1,7 @@
+let version = "1.0.0";
 // Office.js initialization
+console.log('version: '+ version);
+
 Office.onReady((info) => {
     console.log('Office.onReady called', info);
     if (info.host === Office.HostType.Outlook) {
@@ -423,7 +426,7 @@ function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, externalAu
   </soap:Body>
 </soap:Envelope>`;
 
-  console.log('EWS SOAP Request:', soap);
+//   console.log('EWS SOAP Request:', soap);
   console.log('Start Time UTC:', toUtc(startLocal));
   console.log('End Time UTC:', toUtc(endLocal));
 
@@ -581,8 +584,10 @@ function showStatus(type, message) {
 
 // Update version information
 function updateVersionInfo() {
+    const versionInfoElement = document.getElementById('versionInfo');
     const lastUpdateElement = document.getElementById('lastUpdate');
-    if (lastUpdateElement) {
+    
+    if (versionInfoElement) {
         const now = new Date();
         const dateStr = now.toLocaleDateString('tr-TR', {
             day: '2-digit',
@@ -593,7 +598,23 @@ function updateVersionInfo() {
             hour: '2-digit',
             minute: '2-digit'
         });
-        lastUpdateElement.textContent = `${dateStr} ${timeStr}`;
+        
+        // Update version info with JavaScript variable
+        versionInfoElement.innerHTML = `Sürüm: ${version} | Son Güncelleme: <span id="lastUpdate">${dateStr} ${timeStr}</span>`;
     }
+    
+    // if (lastUpdateElement) {
+    //     const now = new Date();
+    //     const dateStr = now.toLocaleDateString('tr-TR', {
+    //         day: '2-digit',
+    //         month: '2-digit',
+    //         year: 'numeric'
+    //     });
+    //     const timeStr = now.toLocaleTimeString('tr-TR', {
+    //         hour: '2-digit',
+    //         minute: '2-digit'
+    //     });
+    //     lastUpdateElement.textContent = `${dateStr} ${timeStr}`;
+    // }
 }
 
