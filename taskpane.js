@@ -30,6 +30,7 @@ function initializeApp() {
     loadColleagues();
     setupFormListeners();
     setDefaultDates();
+    updateVersionInfo();
 }
 
 // Global variables
@@ -472,5 +473,23 @@ function showStatus(type, message) {
     setTimeout(() => {
         statusDiv.style.display = 'none';
     }, 8000); // Show longer for success messages
+}
+
+// Update version information
+function updateVersionInfo() {
+    const lastUpdateElement = document.getElementById('lastUpdate');
+    if (lastUpdateElement) {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        const timeStr = now.toLocaleTimeString('tr-TR', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        lastUpdateElement.textContent = `${dateStr} ${timeStr}`;
+    }
 }
 
