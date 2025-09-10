@@ -313,7 +313,7 @@ async function setAutoReply(event) {
 // Get user profile information
 function getUserProfile() {
     return new Promise((resolve, reject) => {
-        console.log('getUserProfile:' + Office.context.mailbox.userProfile);
+        console.log('getUserProfile:' + Office.context.mailbox.userProfile.displayName);
         if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox && Office.context.mailbox.userProfile) {
             // userProfile is a direct property, not a method
             const userProfile = Office.context.mailbox.userProfile;
