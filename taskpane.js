@@ -1,4 +1,4 @@
-let version = "1.0.0";
+let version = "1.0.1";
 // Office.js initialization
 console.log('version: '+ version);
 
@@ -421,112 +421,119 @@ function xmlEscape(s) {
 }
 
 // 3) EWS – ANINDA çalışır (Improved version with diagnostics)
-function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, audience="All") {
-  const email = Office.context.mailbox.userProfile.emailAddress;
-  const start = toLocalNaive(startLocal);
-  const end   = toLocalNaive(endLocal);
-  // CDATA kullanıyorsan ]]>
-  const safeInternal = internalMsg.includes("]]>") ? xmlEscape(internalMsg) : `<![CDATA[${internalMsg}]]>`;
-  const safeExternal = externalMsg.includes("]]>") ? xmlEscape(externalMsg) : `<![CDATA[${externalMsg}]]>`;
-
-  const soap = `
-  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-                 xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
-    <soap:Header>
-      <t:RequestServerVersion Version="Exchange2013"/>
-    </soap:Header>
-    <soap:Body>
-      <SetUserOofSettingsRequest xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
-        <Mailbox>${email}</Mailbox>
-        <UserOofSettings>
-          <OofState>Scheduled</OofState>
-          <ExternalAudience>${audience}</ExternalAudience>
-          <Duration>
-            <StartTime>${start}</StartTime>
-            <EndTime>${end}</EndTime>
-          </Duration>
-          <InternalReply><Message>${safeInternal}</Message></InternalReply>
-          <ExternalReply><Message>${safeExternal}</Message></ExternalReply>
-        </UserOofSettings>
-      </SetUserOofSettingsRequest>
-    </soap:Body>
-  </soap:Envelope>`;
-
-  console.log('EWS SOAP içeriği', soap);
-  console.log('EWS SET - Start Time (Local):', start);
-  console.log('EWS SET - End Time (Local):', end);
-
-  return new Promise((resolve, reject) => {
-    Office.context.mailbox.makeEwsRequestAsync(soap, res => {
-      if (res.status !== Office.AsyncResultStatus.Succeeded) return reject(res.error);
-      
-      console.log('EWS SET Response:', res);
-      console.log('EWS SET Response XML:', res.value);
-      
-      // Parse XML response more thoroughly
-      const xml = new window.DOMParser().parseFromString(res.value, "text/xml");
-      
-      // Try multiple possible response code locations
-      let rc = xml.getElementsByTagName("m:ResponseCode")[0] 
-            || xml.getElementsByTagName("ResponseCode")[0]
-            || xml.querySelector("ResponseCode")
-            || xml.querySelector("m\\:ResponseCode");
-      
-      // Also check for error elements
-      const errorCode = xml.getElementsByTagName("ErrorCode")[0] 
-                     || xml.getElementsByTagName("m:ErrorCode")[0];
-      const faultString = xml.getElementsByTagName("faultstring")[0];
-      
-      console.log('EWS SET Response Code:', rc ? rc.textContent : 'Not found');
-      console.log('EWS SET Error Code:', errorCode ? errorCode.textContent : 'None');
-      console.log('EWS SET Fault String:', faultString ? faultString.textContent : 'None');
-      
-      // Check for success conditions
-      if (rc && rc.textContent === "NoError") {
-        console.log('EWS SET successful, verifying with GET...');
-        resolve(res.value);
-      } else if (!rc && !errorCode && !faultString) {
-        // No explicit error, might be successful
-        console.log('EWS SET - No error codes found, assuming success');
-        resolve(res.value);
-      } else {
-        const errorMsg = errorCode ? errorCode.textContent : 
-                        faultString ? faultString.textContent :
-                        rc ? rc.textContent : 'Unknown error';
-        reject(new Error(`EWS ResponseCode: ${errorMsg}`));
-      }
-    });
-  });
-}
-
-// GET function to verify OOF settings
-function getOOFViaEws() {
-  const email = Office.context.mailbox.userProfile.emailAddress;
-  const soap = `
-  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-    <soap:Body>
-      <GetUserOofSettingsRequest xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
-        <Mailbox xmlns="http://schemas.microsoft.com/exchange/services/2006/types">${email}</Mailbox>
-      </GetUserOofSettingsRequest>
-    </soap:Body>
-  </soap:Envelope>`;
+function toLocalNaive(dt) {
+    const d = new Date(dt);
+    const p = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00`;
+  }
   
-  return new Promise((resolve, reject) => {
-    Office.context.mailbox.makeEwsRequestAsync(soap, res => {
-      if (res.status !== Office.AsyncResultStatus.Succeeded) return reject(res.error);
-      const xml = new window.DOMParser().parseFromString(res.value, "text/xml");
-      const state = xml.getElementsByTagName("OofState")[0]?.textContent;
-      const start = xml.getElementsByTagName("StartTime")[0]?.textContent;
-      const end   = xml.getElementsByTagName("EndTime")[0]?.textContent;
-      const ext   = xml.getElementsByTagName("ExternalAudience")[0]?.textContent;
-      
-      console.log('EWS GET Results:', { state, start, end, ext });
-      console.log('EWS GET Response XML:', res.value);
-      
-      resolve({ state, start, end, ext, raw: res.value });
+  // ]]>, CDATA’yı bozmasın:
+  function cdataWrap(s) {
+    return '<![CDATA[' + String(s).replace(/]]>/g, ']]]]><![CDATA[>') + ']]>';
+  }
+  
+  function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, audience = "All") {
+    const email = Office.context.mailbox.userProfile.emailAddress;
+    const start = toLocalNaive(startLocal);
+    const end   = toLocalNaive(endLocal);
+  
+    const soap = `
+    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                   xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
+                   xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+      <soap:Header>
+        <t:RequestServerVersion Version="Exchange2013"/>
+      </soap:Header>
+      <soap:Body>
+        <m:SetUserOofSettingsRequest>
+          <t:Mailbox><t:Address>${email}</t:Address></t:Mailbox>
+          <t:UserOofSettings>
+            <t:OofState>Scheduled</t:OofState>
+            <t:ExternalAudience>${audience}</t:ExternalAudience>
+            <t:Duration>
+              <t:StartTime>${start}</t:StartTime>
+              <t:EndTime>${end}</t:EndTime>
+            </t:Duration>
+            <t:InternalReply><t:Message>${cdataWrap(internalMsg)}</t:Message></t:InternalReply>
+            <t:ExternalReply><t:Message>${cdataWrap(externalMsg)}</t:Message></t:ExternalReply>
+          </t:UserOofSettings>
+        </m:SetUserOofSettingsRequest>
+      </soap:Body>
+    </soap:Envelope>`;
+  
+    const M = "http://schemas.microsoft.com/exchange/services/2006/messages";
+  
+    return new Promise((resolve, reject) => {
+      Office.context.mailbox.makeEwsRequestAsync(soap, res => {
+        if (res.status !== Office.AsyncResultStatus.Succeeded) {
+          return reject(res.error);
+        }
+        const xml = new DOMParser().parseFromString(res.value, "text/xml");
+        const code = xml.getElementsByTagNameNS(M, "ResponseCode")[0]?.textContent;
+        const text = xml.getElementsByTagNameNS(M, "MessageText")[0]?.textContent || "";
+        if (code === "NoError") return resolve();
+        reject(new Error(`EWS ResponseCode: ${code || "Unknown"} ${text}`.trim()));
+      });
     });
-  });
-}
+  }
+  
+  // (İsteğe bağlı) anında doğrulama:
+  function getOOFViaEws() {
+    const email = Office.context.mailbox.userProfile.emailAddress;
+    const soap = `
+    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                   xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
+                   xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+      <soap:Body>
+        <m:GetUserOofSettingsRequest>
+          <t:Mailbox><t:Address>${email}</t:Address></t:Mailbox>
+        </m:GetUserOofSettingsRequest>
+      </soap:Body>
+    </soap:Envelope>`;
+    const T = "http://schemas.microsoft.com/exchange/services/2006/types";
+    return new Promise((resolve, reject) => {
+      Office.context.mailbox.makeEwsRequestAsync(soap, res => {
+        if (res.status !== Office.AsyncResultStatus.Succeeded) return reject(res.error);
+        const xml = new DOMParser().parseFromString(res.value, "text/xml");
+        resolve({
+          state: xml.getElementsByTagNameNS(T, "OofState")[0]?.textContent,
+          start: xml.getElementsByTagNameNS(T, "StartTime")[0]?.textContent,
+          end:   xml.getElementsByTagNameNS(T, "EndTime")[0]?.textContent,
+          raw:   res.value
+        });
+      });
+    });
+  }
+  
+
+// // GET function to verify OOF settings
+// function getOOFViaEws() {
+//   const email = Office.context.mailbox.userProfile.emailAddress;
+//   const soap = `
+//   <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+//     <soap:Body>
+//       <GetUserOofSettingsRequest xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
+//         <Mailbox xmlns="http://schemas.microsoft.com/exchange/services/2006/types">${email}</Mailbox>
+//       </GetUserOofSettingsRequest>
+//     </soap:Body>
+//   </soap:Envelope>`;
+  
+//   return new Promise((resolve, reject) => {
+//     Office.context.mailbox.makeEwsRequestAsync(soap, res => {
+//       if (res.status !== Office.AsyncResultStatus.Succeeded) return reject(res.error);
+//       const xml = new window.DOMParser().parseFromString(res.value, "text/xml");
+//       const state = xml.getElementsByTagName("OofState")[0]?.textContent;
+//       const start = xml.getElementsByTagName("StartTime")[0]?.textContent;
+//       const end   = xml.getElementsByTagName("EndTime")[0]?.textContent;
+//       const ext   = xml.getElementsByTagName("ExternalAudience")[0]?.textContent;
+      
+//       console.log('EWS GET Results:', { state, start, end, ext });
+//       console.log('EWS GET Response XML:', res.value);
+      
+//       resolve({ state, start, end, ext, raw: res.value });
+//     });
+//   });
+// }
 
 // Helper function to escape XML characters
 function escapeXml(text) {
