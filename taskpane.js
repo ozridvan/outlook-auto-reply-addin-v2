@@ -147,7 +147,7 @@ function loadColleagues() {
         option.value = colleague.id;
         option.textContent = `${colleague.name} (${colleague.department})`;
         colleagueSelect.appendChild(option);
-        console.log('Added colleague:', colleague.name);
+        // console.log('Added colleague:', colleague.name);
     });
     
     console.log('Colleagues loaded successfully, total options:', colleagueSelect.options.length);
@@ -341,7 +341,7 @@ async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
         if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox) {
             // Try to get an access token for Graph API
             Office.context.auth.getAccessTokenAsync({ allowSignInPrompt: true }, (result) => {
-                console.log('setOutlookAutoReply:' + result.value);
+                console.log('setOutlookAutoReply:' + result);
                 if (result.status === Office.AsyncResultStatus.Succeeded) {
                     // Use Graph API to set automatic reply
                     setAutoReplyViaGraphAPI(result.value, messageBody, startDateTime, endDateTime)
