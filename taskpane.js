@@ -452,6 +452,7 @@ function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, audience="
     </soap:Body>
   </soap:Envelope>`;
 
+  console.log('EWS SOAP içeriği', soap);
   console.log('EWS SET - Start Time (Local):', start);
   console.log('EWS SET - End Time (Local):', end);
 
