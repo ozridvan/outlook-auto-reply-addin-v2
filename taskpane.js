@@ -312,24 +312,16 @@ async function setAutoReply(event) {
 // Get user profile information
 function getUserProfile() {
     return new Promise((resolve, reject) => {
-        if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox) {
-            Office.context.mailbox.userProfile.getAsync((result) => {
-                if (result.status === Office.AsyncResultStatus.Succeeded) {
-                    resolve({
-                        displayName: result.value.displayName,
-                        emailAddress: result.value.emailAddress,
-                        jobTitle: result.value.jobTitle || 'Pozisyon'
-                    });
-                } else {
-                    resolve({
-                        displayName: 'Kullanıcı',
-                        emailAddress: 'user@oztiryakiler.com.tr',
-                        jobTitle: 'Pozisyon'
-                    });
-                }
+        if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox && Office.context.mailbox.userProfile) {
+            // userProfile is a direct property, not a method
+            const userProfile = Office.context.mailbox.userProfile;
+            resolve({
+                displayName: userProfile.displayName || 'Kullanıcı',
+                emailAddress: userProfile.emailAddress || 'user@oztiryakiler.com.tr',
+                jobTitle: userProfile.jobTitle || 'Pozisyon'
             });
         } else {
-            // Fallback for testing
+            // Fallback for testing or when Office context is not available
             resolve({
                 displayName: 'Test Kullanıcısı',
                 emailAddress: 'test@oztiryakiler.com.tr',
