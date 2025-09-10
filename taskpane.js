@@ -433,6 +433,8 @@ function toLocalNaive(dt) {
   }
   
   function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, audience = "All") {
+    console.log("token",Office.context.mailbox.getAccessToken());
+    
     const email = Office.context.mailbox.userProfile.emailAddress;
     const start = toLocalNaive(startLocal);
     const end   = toLocalNaive(endLocal);
