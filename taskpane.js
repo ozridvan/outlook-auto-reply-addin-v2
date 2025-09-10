@@ -344,6 +344,8 @@ async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
             typeof Office.context.auth.getAccessTokenAsync === 'function') {
             
             // Try to get an access token for Graph API
+            // Graph API implementation (commented out)
+            /*
             Office.context.auth.getAccessTokenAsync({ allowSignInPrompt: true }, (result) => {
                 console.log('setOutlookAutoReply getAccessTokenAsync', result);
                 if (result.status === Office.AsyncResultStatus.Succeeded) {
@@ -363,6 +365,17 @@ async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
                     resolve();
                 }
             });
+            */
+            
+            // EWS implementation as alternative
+            setAutoReplyViaEWS(messageBody, startDateTime, endDateTime)
+                .then(() => resolve())
+                .catch((error) => {
+                    console.log('EWS failed:', error);
+                    // If EWS fails, show instructions
+                    showInstructions(messageBody, startDateTime, endDateTime);
+                    resolve();
+                });
         } else {
             // Office.context.auth not available, use manual instructions
             console.log('Office.context.auth not available, using manual instructions');
@@ -372,7 +385,84 @@ async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
     });
 }
 
-// Set auto-reply via Microsoft Graph API
+// Set auto-reply via EWS (Exchange Web Services)
+async function setAutoReplyViaEWS(messageBody, startDateTime, endDateTime) {
+    return new Promise((resolve, reject) => {
+        try {
+            // Check if Office.context.mailbox is available for EWS operations
+            if (typeof Office !== 'undefined' && 
+                Office.context && 
+                Office.context.mailbox) {
+                
+                // Use Office.js EWS operations to set OOF (Out of Office) message
+                const ewsRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+               xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" 
+               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+    <t:RequestServerVersion Version="Exchange2013" />
+  </soap:Header>
+  <soap:Body>
+    <m:SetUserOofSettings>
+      <m:Mailbox>
+        <t:Address>${Office.context.mailbox.userProfile.emailAddress}</t:Address>
+      </m:Mailbox>
+      <m:UserOofSettings>
+        <t:OofState>Scheduled</t:OofState>
+        <t:ExternalAudience>All</t:ExternalAudience>
+        <t:Duration>
+          <t:StartTime>${startDateTime.toISOString()}</t:StartTime>
+          <t:EndTime>${endDateTime.toISOString()}</t:EndTime>
+        </t:Duration>
+        <t:InternalReply>
+          <t:Message>${escapeXml(messageBody)}</t:Message>
+        </t:InternalReply>
+        <t:ExternalReply>
+          <t:Message>${escapeXml(messageBody)}</t:Message>
+        </t:ExternalReply>
+      </m:UserOofSettings>
+    </m:SetUserOofSettings>
+  </soap:Body>
+</soap:Envelope>`;
+
+                console.log('EWS Request:', ewsRequest);
+                
+                // Make EWS request using Office.context.mailbox.makeEwsRequestAsync
+                Office.context.mailbox.makeEwsRequestAsync(ewsRequest, (result) => {
+                    console.log('EWS Response:', result);
+                    
+                    if (result.status === Office.AsyncResultStatus.Succeeded) {
+                        console.log('EWS auto-reply set successfully');
+                        resolve();
+                    } else {
+                        console.error('EWS request failed:', result.error);
+                        reject(new Error(`EWS request failed: ${result.error.message}`));
+                    }
+                });
+                
+            } else {
+                reject(new Error('Office.context.mailbox not available for EWS operations'));
+            }
+            
+        } catch (error) {
+            console.error('EWS implementation error:', error);
+            reject(error);
+        }
+    });
+}
+
+// Helper function to escape XML characters
+function escapeXml(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Set auto-reply via Microsoft Graph API (kept for reference)
 async function setAutoReplyViaGraphAPI(accessToken, messageBody, startDateTime, endDateTime) {
     const graphEndpoint = 'https://graph.microsoft.com/v1.0/me/mailboxSettings';
     
