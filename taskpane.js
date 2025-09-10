@@ -392,13 +392,13 @@ function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, externalAu
   const toUtc = d => new Date(d).toISOString(); // EWS için UTC güvenli
   const email = Office.context.mailbox.userProfile.emailAddress;
   
+  // Simplified EWS request without namespaces in body
   const soap = `<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-               xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
-               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" 
-               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
+               xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages">
   <soap:Header>
-    <t:RequestServerVersion Version="Exchange2013" />
+    <t:RequestServerVersion Version="Exchange2016" />
   </soap:Header>
   <soap:Body>
     <m:SetUserOofSettings>
@@ -407,7 +407,7 @@ function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, externalAu
       </m:Mailbox>
       <m:UserOofSettings>
         <t:OofState>Scheduled</t:OofState>
-        <t:ExternalAudience>${externalAudience}</t:ExternalAudience>
+        <t:ExternalAudience>All</t:ExternalAudience>
         <t:Duration>
           <t:StartTime>${toUtc(startLocal)}</t:StartTime>
           <t:EndTime>${toUtc(endLocal)}</t:EndTime>
@@ -424,16 +424,28 @@ function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, externalAu
 </soap:Envelope>`;
 
   console.log('EWS SOAP Request:', soap);
+  console.log('Start Time UTC:', toUtc(startLocal));
+  console.log('End Time UTC:', toUtc(endLocal));
 
   return new Promise((resolve, reject) => {
     Office.context.mailbox.makeEwsRequestAsync(soap, (res) => {
-      console.log('EWS Response:', res);
+      console.log('EWS Response Status:', res.status);
+      console.log('EWS Full Response:', res);
+      
       if (res.status === Office.AsyncResultStatus.Succeeded) {
         console.log('EWS Response Value:', res.value);
-        resolve();
+        
+        // Check if there's an error in the response XML
+        if (res.value && res.value.includes('ErrorCode')) {
+          console.error('EWS returned error in response:', res.value);
+          reject(new Error('EWS operation failed: ' + res.value));
+        } else {
+          console.log('EWS OOF settings applied successfully');
+          resolve();
+        }
       } else {
         console.error('EWS Error:', res.error);
-        reject(res.error);
+        reject(res.error || new Error('EWS request failed'));
       }
     });
   });
