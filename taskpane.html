@@ -16,24 +16,29 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 12px;
             background-color: #f5f5f5;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
         
         .container {
-            max-width: 400px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 24px;
+            padding: 16px;
+            box-sizing: border-box;
+            min-height: calc(100vh - 24px);
         }
         
         .header {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             border-bottom: 2px solid #0078d4;
-            padding-bottom: 16px;
+            padding-bottom: 12px;
         }
         
         .header h1 {
@@ -44,7 +49,7 @@
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         
         .form-group label {
@@ -72,10 +77,23 @@
         .date-time-group {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
         
         .date-time-group .form-control {
             flex: 1;
+            min-width: 120px;
+        }
+        
+        @media (max-width: 350px) {
+            .date-time-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .date-time-group .form-control {
+                width: 100%;
+            }
         }
         
         .btn {
@@ -124,11 +142,13 @@
         }
         
         .preview-section {
-            margin-top: 24px;
-            padding: 16px;
+            margin-top: 20px;
+            padding: 12px;
             background-color: #f8f9fa;
             border-radius: 4px;
             border-left: 4px solid #0078d4;
+            max-height: 200px;
+            overflow-y: auto;
         }
         
         .preview-section h3 {
@@ -162,6 +182,54 @@
             background-color: #fde7e9;
             color: #d13438;
             border: 1px solid #d13438;
+        }
+        
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+            color: #0078d4;
+        }
+        
+        .instruction-step {
+            margin: 12px 0;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-left: 3px solid #0078d4;
+            border-radius: 4px;
+        }
+        
+        .copy-button {
+            background-color: #f3f2f1;
+            border: 1px solid #d1d1d1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        
+        .copy-button:hover {
+            background-color: #e1dfdd;
         }
     </style>
 </head>
@@ -210,6 +278,14 @@
         </div>
         
         <div id="statusMessage" class="status-message" style="display: none;"></div>
+        
+        <div id="instructionsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h3>📋 Otomatik Yanıt Ayarlama Talimatları</h3>
+                <div id="instructionsContent"></div>
+                <button onclick="closeInstructions()" class="btn">Anladım</button>
+            </div>
+        </div>
     </div>
 
     <script src="taskpane.js"></script>

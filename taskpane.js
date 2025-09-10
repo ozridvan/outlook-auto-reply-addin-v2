@@ -152,7 +152,6 @@ function loadColleagues() {
     console.log('Colleagues loaded successfully, total options:', colleagueSelect.options.length);
 }
 
-
 function setupFormListeners() {
     const inputs = ['colleague', 'startDate', 'startTime', 'endDate', 'endTime'];
     inputs.forEach(id => {
@@ -241,7 +240,7 @@ function updatePreview() {
     previewDiv.textContent = `Konu: ${messageTemplate.subject}\n\n${messageBody}`;
 }
 
-function setAutoReply(event) {
+async function setAutoReply(event) {
     event.preventDefault();
     
     const colleagueId = document.getElementById('colleague').value;
@@ -269,54 +268,207 @@ function setAutoReply(event) {
     button.disabled = true;
     button.textContent = 'Ayarlanıyor...';
     
-    // Prepare the auto-reply message
-    const startDateTimeFormatted = formatDisplayDate(startDate, startTime);
-    const endDateTimeFormatted = formatDisplayDate(endDate, endTime);
-    
-    const currentUser = {
-        name: "Kullanıcı Adı", // This would be retrieved from Office context
-        position: "Pozisyon",
-        company: "Öztiryakiler"
-    };
-    
-    let messageBody = messageTemplate.body
-        .replaceAll('{startDate}', startDateTimeFormatted)
-        .replaceAll('{endDate}', endDateTimeFormatted)
-        .replaceAll('{colleagueName}', colleague.name)
-        .replaceAll('{email}', colleague.email)
-        .replaceAll('{phone}', colleague.phone)
-        .replaceAll('{userName}', currentUser.name)
-        .replaceAll('{position}', currentUser.position)
-        .replaceAll('{company}', currentUser.company);
-    
-    // Use Office.js to set the auto-reply
-    Office.context.mailbox.userProfile.getAsync((result) => {
-        if (result.status === Office.AsyncResultStatus.Succeeded) {
-            // In a real implementation, we would use EWS or Graph API to set auto-reply
-            // For now, we'll simulate the process
-            setTimeout(() => {
-                showStatus('success', 'Otomatik yanıt başarıyla ayarlandı!');
-                
-                button.disabled = false;
-                button.textContent = 'Otomatik Yanıtı Ayarla';
-                
-                // Log the auto-reply details for debugging
-                console.log('Auto-reply set:', {
-                    subject: messageTemplate.subject,
-                    body: messageBody,
-                    startDate: startDateTime,
-                    endDate: endDateTime,
-                    colleague: colleague
-                });
-                
-            }, 2000);
+    try {
+        // Get current user information
+        const userProfile = await getUserProfile();
+        
+        // Prepare the auto-reply message
+        const startDateTimeFormatted = formatDisplayDate(startDate, startTime);
+        const endDateTimeFormatted = formatDisplayDate(endDate, endTime);
+        
+        let messageBody = messageTemplate.body
+            .replaceAll('{startDate}', startDateTimeFormatted)
+            .replaceAll('{endDate}', endDateTimeFormatted)
+            .replaceAll('{colleagueName}', colleague.name)
+            .replaceAll('{email}', colleague.email)
+            .replaceAll('{phone}', colleague.phone)
+            .replaceAll('{userName}', userProfile.displayName || 'Kullanıcı')
+            .replaceAll('{position}', userProfile.jobTitle || 'Pozisyon')
+            .replaceAll('{company}', 'Öztiryakiler');
+        
+        // Set the automatic reply using Graph API
+        await setOutlookAutoReply(messageBody, startDateTime, endDateTime);
+        
+        showStatus('success', 'Otomatik yanıt ayarları hazırlandı! Lütfen talimatları takip ederek Outlook\'ta etkinleştirin.');
+        
+        // Log the auto-reply details for debugging
+        console.log('Auto-reply set:', {
+            subject: messageTemplate.subject,
+            body: messageBody,
+            startDate: startDateTime,
+            endDate: endDateTime,
+            colleague: colleague
+        });
+        
+    } catch (error) {
+        console.error('Error setting auto-reply:', error);
+        showStatus('error', 'Otomatik yanıt ayarlanırken hata oluştu: ' + error.message);
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Otomatik Yanıtı Ayarla';
+    }
+}
+
+// Get user profile information
+function getUserProfile() {
+    return new Promise((resolve, reject) => {
+        if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox) {
+            Office.context.mailbox.userProfile.getAsync((result) => {
+                if (result.status === Office.AsyncResultStatus.Succeeded) {
+                    resolve({
+                        displayName: result.value.displayName,
+                        emailAddress: result.value.emailAddress,
+                        jobTitle: result.value.jobTitle || 'Pozisyon'
+                    });
+                } else {
+                    resolve({
+                        displayName: 'Kullanıcı',
+                        emailAddress: 'user@oztiryakiler.com.tr',
+                        jobTitle: 'Pozisyon'
+                    });
+                }
+            });
         } else {
-            showStatus('error', 'Otomatik yanıt ayarlanırken hata oluştu!');
-            
-            button.disabled = false;
-            button.textContent = 'Otomatik Yanıtı Ayarla';
+            // Fallback for testing
+            resolve({
+                displayName: 'Test Kullanıcısı',
+                emailAddress: 'test@oztiryakiler.com.tr',
+                jobTitle: 'Test Pozisyonu'
+            });
         }
     });
+}
+
+// Set Outlook automatic reply using Graph API approach
+async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
+    return new Promise((resolve, reject) => {
+        if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox) {
+            // Try to get an access token for Graph API
+            Office.context.auth.getAccessTokenAsync({ allowSignInPrompt: true }, (result) => {
+                if (result.status === Office.AsyncResultStatus.Succeeded) {
+                    // Use Graph API to set automatic reply
+                    setAutoReplyViaGraphAPI(result.value, messageBody, startDateTime, endDateTime)
+                        .then(() => resolve())
+                        .catch(() => {
+                            // If Graph API fails, show instructions
+                            showInstructions(messageBody, startDateTime, endDateTime);
+                            resolve();
+                        });
+                } else {
+                    // Show manual instructions
+                    showInstructions(messageBody, startDateTime, endDateTime);
+                    resolve();
+                }
+            });
+        } else {
+            // Fallback for testing
+            showInstructions(messageBody, startDateTime, endDateTime);
+            setTimeout(() => resolve(), 1000);
+        }
+    });
+}
+
+// Set auto-reply via Microsoft Graph API
+async function setAutoReplyViaGraphAPI(accessToken, messageBody, startDateTime, endDateTime) {
+    const graphEndpoint = 'https://graph.microsoft.com/v1.0/me/mailboxSettings';
+    
+    const autoReplySettings = {
+        automaticRepliesSetting: {
+            status: 'scheduled',
+            externalAudience: 'all',
+            scheduledStartDateTime: {
+                dateTime: startDateTime.toISOString(),
+                timeZone: 'Turkey Standard Time'
+            },
+            scheduledEndDateTime: {
+                dateTime: endDateTime.toISOString(),
+                timeZone: 'Turkey Standard Time'
+            },
+            internalReplyMessage: messageBody,
+            externalReplyMessage: messageBody
+        }
+    };
+    
+    const response = await fetch(graphEndpoint, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(autoReplySettings)
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Graph API error: ${response.status}`);
+    }
+    
+    return response;
+}
+
+// Show manual instructions to user
+function showInstructions(messageBody, startDateTime, endDateTime) {
+    const modal = document.getElementById('instructionsModal');
+    const content = document.getElementById('instructionsContent');
+    
+    const startDateStr = startDateTime.toLocaleDateString('tr-TR') + ' ' + startDateTime.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'});
+    const endDateStr = endDateTime.toLocaleDateString('tr-TR') + ' ' + endDateTime.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'});
+    
+    content.innerHTML = `
+        <div class="instruction-step">
+            <strong>1. Outlook Ayarlarını Açın</strong><br>
+            Dosya → Otomatik Yanıtlar (Ofis Dışında) menüsüne gidin.
+        </div>
+        
+        <div class="instruction-step">
+            <strong>2. Otomatik Yanıtları Etkinleştirin</strong><br>
+            "Otomatik yanıtları gönder" seçeneğini işaretleyin.
+        </div>
+        
+        <div class="instruction-step">
+            <strong>3. Zaman Aralığını Ayarlayın</strong><br>
+            "Yalnızca şu zaman aralığında gönder" seçeneğini işaretleyin:<br>
+            <strong>Başlangıç:</strong> ${startDateStr}<br>
+            <strong>Bitiş:</strong> ${endDateStr}
+        </div>
+        
+        <div class="instruction-step">
+            <strong>4. Mesaj İçeriğini Kopyalayın</strong><br>
+            Aşağıdaki mesajı kopyalayıp "Kuruluşum içinde" ve "Kuruluşum dışında" alanlarına yapıştırın:
+            <button class="copy-button" onclick="copyMessage()">📋 Kopyala</button>
+            <div id="messageForCopy" style="display: none;">${messageBody}</div>
+        </div>
+        
+        <div class="instruction-step">
+            <strong>5. Kaydedin</strong><br>
+            "Tamam" butonuna tıklayarak ayarları kaydedin.
+        </div>
+    `;
+    
+    modal.style.display = 'block';
+}
+
+// Copy message to clipboard
+function copyMessage() {
+    const messageDiv = document.getElementById('messageForCopy');
+    const textArea = document.createElement('textarea');
+    textArea.value = messageDiv.textContent;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    // Show feedback
+    const copyButton = event.target;
+    const originalText = copyButton.textContent;
+    copyButton.textContent = '✅ Kopyalandı!';
+    setTimeout(() => {
+        copyButton.textContent = originalText;
+    }, 2000);
+}
+
+// Close instructions modal
+function closeInstructions() {
+    document.getElementById('instructionsModal').style.display = 'none';
 }
 
 function showStatus(type, message) {
@@ -327,5 +479,6 @@ function showStatus(type, message) {
     
     setTimeout(() => {
         statusDiv.style.display = 'none';
-    }, 5000);
+    }, 8000); // Show longer for success messages
 }
+
