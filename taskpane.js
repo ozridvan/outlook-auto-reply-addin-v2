@@ -469,8 +469,8 @@ async function updateOofSettings(isOofEnabled, startTime, endTime, internalMessa
         <t:ExternalAudience>All</t:ExternalAudience>
         ${isOofEnabled && startTime && endTime ? 
             `<t:Duration>
-                <t:StartTime>${startTime.toISOString()}</t:StartTime>
-                <t:EndTime>${endTime.toISOString()}</t:EndTime>
+                <t:StartTime>${new Date(startTime).toISOString()}</t:StartTime>
+                <t:EndTime>${new Date(endTime).toISOString()}</t:EndTime>
             </t:Duration>`
             : ''}
         <t:InternalReply>
