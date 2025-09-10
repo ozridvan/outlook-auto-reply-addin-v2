@@ -337,11 +337,10 @@ function getUserProfile() {
 // Set Outlook automatic reply using Graph API approach
 async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
     return new Promise((resolve, reject) => {
-        console.log('setOutlookAutoReply:' + Office.context.mailbox.userProfile.emailAddress);
         if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox) {
             // Try to get an access token for Graph API
             Office.context.auth.getAccessTokenAsync({ allowSignInPrompt: true }, (result) => {
-                console.log('setOutlookAutoReply:' + result);
+                console.log('setOutlookAutoReply getAccessTokenAsync' , result);
                 if (result.status === Office.AsyncResultStatus.Succeeded) {
                     // Use Graph API to set automatic reply
                     setAutoReplyViaGraphAPI(result.value, messageBody, startDateTime, endDateTime)
@@ -396,6 +395,10 @@ async function setAutoReplyViaGraphAPI(accessToken, messageBody, startDateTime, 
         body: JSON.stringify(autoReplySettings)
     });
     
+    console.log('setAutoReplyViaGraphAPI accessToken:' , accessToken);
+    console.log('setAutoReplyViaGraphAPI json:' , autoReplySettings);
+    console.log('setAutoReplyViaGraphAPI response:' , response);
+
     if (!response.ok) {
         throw new Error(`Graph API error: ${response.status}`);
     }
