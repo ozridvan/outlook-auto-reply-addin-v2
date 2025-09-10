@@ -391,33 +391,62 @@ async function setOOFViaGraph(token, startLocal, endLocal, internalMsg, external
 function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, externalAudience = "All") {
   const toUtc = d => new Date(d).toISOString(); // EWS için UTC güvenli
   const email = Office.context.mailbox.userProfile.emailAddress;
-  // HTML kullanacaksan CDATA ile gönder: <![CDATA[...]]>
-  const soap = `
-  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-                 xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
-    <soap:Body>
-      <SetUserOofSettingsRequest xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
-        <Mailbox>${email}</Mailbox>
-        <UserOofSettings>
-          <OofState>Scheduled</OofState>
-          <ExternalAudience>${externalAudience}</ExternalAudience>
-          <Duration>
-            <StartTime>${toUtc(startLocal)}</StartTime>
-            <EndTime>${toUtc(endLocal)}</EndTime>
-          </Duration>
-          <InternalReply><Message><![CDATA[${internalMsg}]]></Message></InternalReply>
-          <ExternalReply><Message><![CDATA[${externalMsg}]]></Message></InternalReply>
-        </UserOofSettings>
-      </SetUserOofSettingsRequest>
-    </soap:Body>
-  </soap:Envelope>`;
+  
+  const soap = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+               xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages" 
+               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" 
+               xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header>
+    <t:RequestServerVersion Version="Exchange2013" />
+  </soap:Header>
+  <soap:Body>
+    <m:SetUserOofSettings>
+      <m:Mailbox>
+        <t:Address>${email}</t:Address>
+      </m:Mailbox>
+      <m:UserOofSettings>
+        <t:OofState>Scheduled</t:OofState>
+        <t:ExternalAudience>${externalAudience}</t:ExternalAudience>
+        <t:Duration>
+          <t:StartTime>${toUtc(startLocal)}</t:StartTime>
+          <t:EndTime>${toUtc(endLocal)}</t:EndTime>
+        </t:Duration>
+        <t:InternalReply>
+          <t:Message>${escapeXml(internalMsg)}</t:Message>
+        </t:InternalReply>
+        <t:ExternalReply>
+          <t:Message>${escapeXml(externalMsg)}</t:Message>
+        </t:ExternalReply>
+      </m:UserOofSettings>
+    </m:SetUserOofSettings>
+  </soap:Body>
+</soap:Envelope>`;
+
+  console.log('EWS SOAP Request:', soap);
 
   return new Promise((resolve, reject) => {
     Office.context.mailbox.makeEwsRequestAsync(soap, (res) => {
-      if (res.status === Office.AsyncResultStatus.Succeeded) resolve();
-      else reject(res.error);
+      console.log('EWS Response:', res);
+      if (res.status === Office.AsyncResultStatus.Succeeded) {
+        console.log('EWS Response Value:', res.value);
+        resolve();
+      } else {
+        console.error('EWS Error:', res.error);
+        reject(res.error);
+      }
     });
   });
+}
+
+// Helper function to escape XML characters
+function escapeXml(text) {
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // Set auto-reply via Microsoft Graph API (kept for reference)
