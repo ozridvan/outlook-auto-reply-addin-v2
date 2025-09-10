@@ -432,52 +432,132 @@ function toLocalNaive(dt) {
     return '<![CDATA[' + String(s).replace(/]]>/g, ']]]]><![CDATA[>') + ']]>';
   }
   
+
+  /**
+ * Kullanıcının OOF ayarlarını güncelleyen asenkron fonksiyon
+ * @param {boolean} isOofEnabled - OOF ayarının açık mı kapalı mı olacağını belirtir.
+ * @param {Date} startTime - OOF başlangıç tarihi. (İsteğe bağlı)
+ * @param {Date} endTime - OOF bitiş tarihi. (İsteğe bağlı)
+ * @param {string} internalMessage - Organizasyon içi otomatik yanıt mesajı.
+ * @param {string} externalMessage - Organizasyon dışı otomatik yanıt mesajı.
+ */
+async function updateOofSettings(isOofEnabled, startTime, endTime, internalMessage, externalMessage) {
+    // EWS URL'sinin mevcut olduğunu kontrol edin
+    if (!Office.context.mailbox.ewsUrl) {
+        console.error("Exchange Web Services URL'si mevcut değil.");
+        return;
+    }
+
+    const OofState = isOofEnabled ? 'Scheduled' : 'Disabled';
+
+    const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+    xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+  <soap:Header>
+    <t:RequestServerVersion Version="Exchange2016" />
+  </soap:Header>
+  <soap:Body>
+    <SetUserOofSettings xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
+      <Mailbox>
+        <t:Address>
+          <t:Name>${Office.context.mailbox.userProfile.displayName}</t:Name>
+          <t:EmailAddress>${Office.context.mailbox.userProfile.emailAddress}</t:EmailAddress>
+        </t:Address>
+      </Mailbox>
+      <UserOofSettings>
+        <t:OofState>${OofState}</t:OofState>
+        <t:ExternalAudience>All</t:ExternalAudience>
+        ${isOofEnabled && startTime && endTime ? 
+            `<t:Duration>
+                <t:StartTime>${startTime.toISOString()}</t:StartTime>
+                <t:EndTime>${endTime.toISOString()}</t:EndTime>
+            </t:Duration>`
+            : ''}
+        <t:InternalReply>
+          <t:Message>${internalMessage}</t:Message>
+        </t:InternalReply>
+        <t:ExternalReply>
+          <t:Message>${externalMessage}</t:Message>
+        </t:ExternalReply>
+      </UserOofSettings>
+    </SetUserOofSettings>
+  </soap:Body>
+</soap:Envelope>`;
+
+    try {
+        const response = await fetch(Office.context.mailbox.ewsUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/xml; charset=utf-8',
+                'SOAPAction': '"http://schemas.microsoft.com/exchange/services/2006/messages/SetUserOofSettings"',
+                // Office.js'de kimlik doğrulama, Office tarafından otomatik olarak yönetilir,
+                // bu yüzden manuel bir Authorization başlığına genellikle gerek yoktur.
+            },
+            body: soapRequest
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP hatası! Durum: ${response.status}`);
+        }
+
+        const responseText = await response.text();
+        console.log("OOF ayarı başarıyla güncellendi. Yanıt:", responseText);
+
+    } catch (error) {
+        console.error("OOF ayarı güncellenirken bir hata oluştu:", error);
+    }
+}
+
+
   function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, audience = "All") {
-    console.log("token",Office.context.mailbox.getAccessToken());
+    //console.log("token",Office.context.mailbox.getAccessToken());
     
     const email = Office.context.mailbox.userProfile.emailAddress;
     const start = toLocalNaive(startLocal);
     const end   = toLocalNaive(endLocal);
   
-    const soap = `
-    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-                   xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
-                   xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
-      <soap:Header>
-        <t:RequestServerVersion Version="Exchange2013"/>
-      </soap:Header>
-      <soap:Body>
-        <m:SetUserOofSettingsRequest>
-          <t:Mailbox><t:Address>${email}</t:Address></t:Mailbox>
-          <t:UserOofSettings>
-            <t:OofState>Scheduled</t:OofState>
-            <t:ExternalAudience>${audience}</t:ExternalAudience>
-            <t:Duration>
-              <t:StartTime>${start}</t:StartTime>
-              <t:EndTime>${end}</t:EndTime>
-            </t:Duration>
-            <t:InternalReply><t:Message>${cdataWrap(internalMsg)}</t:Message></t:InternalReply>
-            <t:ExternalReply><t:Message>${cdataWrap(externalMsg)}</t:Message></t:ExternalReply>
-          </t:UserOofSettings>
-        </m:SetUserOofSettingsRequest>
-      </soap:Body>
-    </soap:Envelope>`;
+
+    updateOofSettings(true, start, end, internalMsg, internalMsg);
+
+    // const soap = `
+    // <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+    //                xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
+    //                xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+    //   <soap:Header>
+    //     <t:RequestServerVersion Version="Exchange2013"/>
+    //   </soap:Header>
+    //   <soap:Body>
+    //     <m:SetUserOofSettingsRequest>
+    //       <t:Mailbox><t:Address>${email}</t:Address></t:Mailbox>
+    //       <t:UserOofSettings>
+    //         <t:OofState>Scheduled</t:OofState>
+    //         <t:ExternalAudience>${audience}</t:ExternalAudience>
+    //         <t:Duration>
+    //           <t:StartTime>${start}</t:StartTime>
+    //           <t:EndTime>${end}</t:EndTime>
+    //         </t:Duration>
+    //         <t:InternalReply><t:Message>${cdataWrap(internalMsg)}</t:Message></t:InternalReply>
+    //         <t:ExternalReply><t:Message>${cdataWrap(externalMsg)}</t:Message></t:ExternalReply>
+    //       </t:UserOofSettings>
+    //     </m:SetUserOofSettingsRequest>
+    //   </soap:Body>
+    // </soap:Envelope>`;
   
-    const M = "http://schemas.microsoft.com/exchange/services/2006/messages";
+    // const M = "http://schemas.microsoft.com/exchange/services/2006/messages";
   
-    return new Promise((resolve, reject) => {
-      Office.context.mailbox.makeEwsRequestAsync(soap, res => {
-        if (res.status !== Office.AsyncResultStatus.Succeeded) {
-          return reject(res.error);
-        }
-        console.log("setOOFViaEws result",res)
-        const xml = new DOMParser().parseFromString(res.value, "text/xml");
-        const code = xml.getElementsByTagNameNS(M, "ResponseCode")[0]?.textContent;
-        const text = xml.getElementsByTagNameNS(M, "MessageText")[0]?.textContent || "";
-        if (code === "NoError") return resolve();
-        reject(new Error(`EWS ResponseCode: ${code || "Unknown"} ${text}`.trim()));
-      });
-    });
+    // return new Promise((resolve, reject) => {
+    //   Office.context.mailbox.makeEwsRequestAsync(soap, res => {
+    //     if (res.status !== Office.AsyncResultStatus.Succeeded) {
+    //       return reject(res.error);
+    //     }
+    //     console.log("setOOFViaEws result",res)
+    //     const xml = new DOMParser().parseFromString(res.value, "text/xml");
+    //     const code = xml.getElementsByTagNameNS(M, "ResponseCode")[0]?.textContent;
+    //     const text = xml.getElementsByTagNameNS(M, "MessageText")[0]?.textContent || "";
+    //     if (code === "NoError") return resolve();
+    //     reject(new Error(`EWS ResponseCode: ${code || "Unknown"} ${text}`.trim()));
+    //   });
+    // });
   }
   
   // (İsteğe bağlı) anında doğrulama:
