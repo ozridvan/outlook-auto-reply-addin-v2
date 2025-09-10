@@ -356,7 +356,7 @@ async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
     }
 }
 
-// 1) GRAPH ile dene, olmazsa EWS'ye düş
+// 1) GRAPH ile dene, olmazsa EWS'ye düş (with SET → GET verification)
 async function setAutomaticReply(startLocal, endLocal, internalMsg, externalMsg) {
   try {
     const token = await OfficeRuntime.auth.getAccessToken({
@@ -364,9 +364,26 @@ async function setAutomaticReply(startLocal, endLocal, internalMsg, externalMsg)
     });
     await setOOFViaGraph(token, startLocal, endLocal, internalMsg, externalMsg);
     return "graph";
-  } catch {
-    await setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, "All");
-    return "ews";
+  } catch (graphError) {
+    console.log('Graph API failed, trying EWS:', graphError);
+    
+    // Try EWS with SET → GET verification
+    try {
+      await setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, "All");
+      
+      // Verify with GET request
+      const verification = await getOOFViaEws();
+      
+      if (verification.state === "Scheduled") {
+        console.log('EWS verification successful:', verification);
+        return "ews";
+      } else {
+        throw new Error(`EWS verification failed: state=${verification.state}`);
+      }
+    } catch (ewsError) {
+      console.error('EWS also failed:', ewsError);
+      throw ewsError;
+    }
   }
 }
 
@@ -390,66 +407,102 @@ async function setOOFViaGraph(token, startLocal, endLocal, internalMsg, external
   if (!res.ok) throw new Error(await res.text());
 }
 
-// 3) EWS – ANINDA çalışır
-function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, externalAudience = "All") {
-  const toUtc = d => new Date(d).toISOString(); // EWS için UTC güvenli
-  const email = Office.context.mailbox.userProfile.emailAddress;
-  
-  // Simplified EWS request without namespaces in body
-  const soap = `<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-               xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types"
-               xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages">
-  <soap:Header>
-    <t:RequestServerVersion Version="Exchange2016" />
-  </soap:Header>
-  <soap:Body>
-    <m:SetUserOofSettings>
-      <m:Mailbox>
-        <t:Address>${email}</t:Address>
-      </m:Mailbox>
-      <m:UserOofSettings>
-        <t:OofState>Scheduled</t:OofState>
-        <t:ExternalAudience>All</t:ExternalAudience>
-        <t:Duration>
-          <t:StartTime>${toUtc(startLocal)}</t:StartTime>
-          <t:EndTime>${toUtc(endLocal)}</t:EndTime>
-        </t:Duration>
-        <t:InternalReply>
-          <t:Message>${escapeXml(internalMsg)}</t:Message>
-        </t:InternalReply>
-        <t:ExternalReply>
-          <t:Message>${escapeXml(externalMsg)}</t:Message>
-        </t:ExternalReply>
-      </m:UserOofSettings>
-    </m:SetUserOofSettings>
-  </soap:Body>
-</soap:Envelope>`;
+// Helper functions for EWS
+function toLocalNaive(dt) {
+  // dt: Date veya "2025-09-10T07:30" gibi yerel saat
+  const d = new Date(dt);
+  // Yereldir: Z/yükleme yok, saniye ekleyelim
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+}
 
-//   console.log('EWS SOAP Request:', soap);
-  console.log('Start Time UTC:', toUtc(startLocal));
-  console.log('End Time UTC:', toUtc(endLocal));
+function xmlEscape(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// 3) EWS – ANINDA çalışır (Improved version with diagnostics)
+function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, audience="All") {
+  const email = Office.context.mailbox.userProfile.emailAddress;
+  const start = toLocalNaive(startLocal);
+  const end   = toLocalNaive(endLocal);
+  // CDATA kullanıyorsan ]]>
+  const safeInternal = internalMsg.includes("]]>") ? xmlEscape(internalMsg) : `<![CDATA[${internalMsg}]]>`;
+  const safeExternal = externalMsg.includes("]]>") ? xmlEscape(externalMsg) : `<![CDATA[${externalMsg}]]>`;
+
+  const soap = `
+  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+                 xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
+    <soap:Header>
+      <t:RequestServerVersion Version="Exchange2013"/>
+    </soap:Header>
+    <soap:Body>
+      <SetUserOofSettingsRequest xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
+        <Mailbox>${email}</Mailbox>
+        <UserOofSettings>
+          <OofState>Scheduled</OofState>
+          <ExternalAudience>${audience}</ExternalAudience>
+          <Duration>
+            <StartTime>${start}</StartTime>
+            <EndTime>${end}</EndTime>
+          </Duration>
+          <InternalReply><Message>${safeInternal}</Message></InternalReply>
+          <ExternalReply><Message>${safeExternal}</Message></ExternalReply>
+        </UserOofSettings>
+      </SetUserOofSettingsRequest>
+    </soap:Body>
+  </soap:Envelope>`;
+
+  console.log('EWS SET - Start Time (Local):', start);
+  console.log('EWS SET - End Time (Local):', end);
 
   return new Promise((resolve, reject) => {
-    Office.context.mailbox.makeEwsRequestAsync(soap, (res) => {
-      console.log('EWS Response Status:', res.status);
-      console.log('EWS Full Response:', res);
+    Office.context.mailbox.makeEwsRequestAsync(soap, res => {
+      if (res.status !== Office.AsyncResultStatus.Succeeded) return reject(res.error);
+      // Burada da SOAP içini kontrol et!
+      const xml = new window.DOMParser().parseFromString(res.value, "text/xml");
+      const resp = xml.getElementsByTagName("m:SetUserOofSettingsResponse")[0] 
+                || xml.getElementsByTagName("SetUserOofSettingsResponse")[0];
+      const rc = xml.getElementsByTagName("m:ResponseCode")[0] 
+              || xml.getElementsByTagName("ResponseCode")[0];
       
-      if (res.status === Office.AsyncResultStatus.Succeeded) {
-        console.log('EWS Response Value:', res.value);
-        
-        // Check if there's an error in the response XML
-        if (res.value && res.value.includes('ErrorCode')) {
-          console.error('EWS returned error in response:', res.value);
-          reject(new Error('EWS operation failed: ' + res.value));
-        } else {
-          console.log('EWS OOF settings applied successfully');
-          resolve();
-        }
+      console.log('EWS SET Response Code:', rc ? rc.textContent : 'Not found');
+      console.log('EWS SET Response XML:', res.value);
+      
+      if (rc && rc.textContent === "NoError") {
+        console.log('EWS SET successful, verifying with GET...');
+        resolve(res.value);
       } else {
-        console.error('EWS Error:', res.error);
-        reject(res.error || new Error('EWS request failed'));
+        reject(new Error(`EWS ResponseCode: ${rc && rc.textContent}`));
       }
+    });
+  });
+}
+
+// GET function to verify OOF settings
+function getOOFViaEws() {
+  const email = Office.context.mailbox.userProfile.emailAddress;
+  const soap = `
+  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+      <GetUserOofSettingsRequest xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
+        <Mailbox xmlns="http://schemas.microsoft.com/exchange/services/2006/types">${email}</Mailbox>
+      </GetUserOofSettingsRequest>
+    </soap:Body>
+  </soap:Envelope>`;
+  
+  return new Promise((resolve, reject) => {
+    Office.context.mailbox.makeEwsRequestAsync(soap, res => {
+      if (res.status !== Office.AsyncResultStatus.Succeeded) return reject(res.error);
+      const xml = new window.DOMParser().parseFromString(res.value, "text/xml");
+      const state = xml.getElementsByTagName("OofState")[0]?.textContent;
+      const start = xml.getElementsByTagName("StartTime")[0]?.textContent;
+      const end   = xml.getElementsByTagName("EndTime")[0]?.textContent;
+      const ext   = xml.getElementsByTagName("ExternalAudience")[0]?.textContent;
+      
+      console.log('EWS GET Results:', { state, start, end, ext });
+      console.log('EWS GET Response XML:', res.value);
+      
+      resolve({ state, start, end, ext, raw: res.value });
     });
   });
 }
