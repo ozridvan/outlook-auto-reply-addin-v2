@@ -291,7 +291,7 @@ async function setAutoReply(event) {
         console.log('setOutlookAutoReply before');
         await setOutlookAutoReply(messageBody, startDateTime, endDateTime);
         
-        showStatus('success', 'Otomatik yanıt ayarları hazırlandı! Lütfen talimatları takip ederek Outlook\'ta etkinleştirin.');
+        showStatus('success', 'Otomatik yanıt mesajı hazırlandı! Manuel ayarlama talimatları gösterilecek.');
         
         // Log the auto-reply details for debugging
         console.log('Auto-reply set:', {
@@ -334,33 +334,40 @@ function getUserProfile() {
     });
 }
 
-// Set Outlook automatic reply using Graph API approach
+// Set Outlook automatic reply - Direct approach without Graph API
 async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
     return new Promise((resolve, reject) => {
-        if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox) {
+        // Check if Office.context.auth is available and supported
+        if (typeof Office !== 'undefined' && 
+            Office.context && 
+            Office.context.auth && 
+            typeof Office.context.auth.getAccessTokenAsync === 'function') {
+            
             // Try to get an access token for Graph API
             Office.context.auth.getAccessTokenAsync({ allowSignInPrompt: true }, (result) => {
-                console.log('setOutlookAutoReply getAccessTokenAsync' , result);
+                console.log('setOutlookAutoReply getAccessTokenAsync', result);
                 if (result.status === Office.AsyncResultStatus.Succeeded) {
                     // Use Graph API to set automatic reply
                     setAutoReplyViaGraphAPI(result.value, messageBody, startDateTime, endDateTime)
                         .then(() => resolve())
-                        .catch(() => {
+                        .catch((error) => {
+                            console.log('Graph API failed:', error);
                             // If Graph API fails, show instructions
                             showInstructions(messageBody, startDateTime, endDateTime);
                             resolve();
                         });
                 } else {
-                    // Show manual instructions
-                    console.log('setOutlookAutoReply:' + result.status);
-                    // showInstructions(messageBody, startDateTime, endDateTime);
-                    // resolve();
+                    // Graph API not supported, show manual instructions
+                    console.log('Graph API not supported, status:', result.status);
+                    showInstructions(messageBody, startDateTime, endDateTime);
+                    resolve();
                 }
             });
         } else {
-            // Fallback for testing
+            // Office.context.auth not available, use manual instructions
+            console.log('Office.context.auth not available, using manual instructions');
             showInstructions(messageBody, startDateTime, endDateTime);
-            setTimeout(() => resolve(), 1000);
+            resolve();
         }
     });
 }
