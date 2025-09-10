@@ -288,6 +288,7 @@ async function setAutoReply(event) {
             .replaceAll('{company}', 'Öztiryakiler');
         
         // Set the automatic reply using Graph API
+        console.log('setOutlookAutoReply before');
         await setOutlookAutoReply(messageBody, startDateTime, endDateTime);
         
         showStatus('success', 'Otomatik yanıt ayarları hazırlandı! Lütfen talimatları takip ederek Outlook\'ta etkinleştirin.');
@@ -336,9 +337,11 @@ function getUserProfile() {
 // Set Outlook automatic reply using Graph API approach
 async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
     return new Promise((resolve, reject) => {
+        console.log('setOutlookAutoReply:' + Office.context.mailbox.userProfile.emailAddress);
         if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox) {
             // Try to get an access token for Graph API
             Office.context.auth.getAccessTokenAsync({ allowSignInPrompt: true }, (result) => {
+                console.log('setOutlookAutoReply:' + result.value);
                 if (result.status === Office.AsyncResultStatus.Succeeded) {
                     // Use Graph API to set automatic reply
                     setAutoReplyViaGraphAPI(result.value, messageBody, startDateTime, endDateTime)
@@ -350,8 +353,9 @@ async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
                         });
                 } else {
                     // Show manual instructions
-                    showInstructions(messageBody, startDateTime, endDateTime);
-                    resolve();
+                    console.log('setOutlookAutoReply:' + result.status);
+                    // showInstructions(messageBody, startDateTime, endDateTime);
+                    // resolve();
                 }
             });
         } else {
