@@ -1,4 +1,4 @@
-let version = "1.0.4";
+let version = "1.0.5";
 // Office.js initialization
 console.log('version: '+ version);
 
@@ -8,8 +8,35 @@ Office.onReady((info) => {
         initializeApp();
         displayVersionInfo();
         checkApiSupport();
+        checkOOFStatusNew();
     }
 });
+
+async function checkOOFStatusNew() {    
+    try {
+        // Microsoft Graph API çağrısı (REST)
+        Office.context.mailbox.getCallbackTokenAsync({isRest: true}, function(result) {
+            if (result.status === "succeeded") {
+                var accessToken = result.value;
+                console.log("accessToken: ", accessToken);
+                // Graph API ile OOF durumu alma
+                fetch('https://graph.microsoft.com/v1.0/me/mailboxSettings/automaticRepliesSetting', {
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // OOF durumu: data.status (disabled, alwaysEnabled, scheduled)
+                });
+            }
+        });
+    } catch (error) {
+        console.error('Error checking OOF status:', error);
+        showStatus('error', 'Otomatik yanıt durumu kontrol edilemedi: ' + error.message);
+    }
+}
 
 async function displayVersionInfo() {
     const versionInfoElement = document.getElementById("version-info");
