@@ -1,4 +1,4 @@
-let version = "1.0.1";
+let version = "1.0.2";
 // Office.js initialization
 console.log('version: '+ version);
 
@@ -6,6 +6,8 @@ Office.onReady((info) => {
     console.log('Office.onReady called', info);
     if (info.host === Office.HostType.Outlook) {
         initializeApp();
+        displayVersionInfo();
+        checkApiSupport();
     }
 });
 
