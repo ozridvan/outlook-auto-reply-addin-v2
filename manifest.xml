@@ -2,6 +2,7 @@
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+           xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0" 
            xsi:type="MailApp">
 
   <Id>c2a8b650-50b2-446e-a8e9-bffa6698b77f</Id>
@@ -124,5 +125,5 @@
         <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Otomatik yanıt ayarlarını yapılandırın"/>
       </bt:LongStrings>
     </Resources>
-
+  </VersionOverrides>
 </OfficeApp>
