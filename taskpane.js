@@ -1,4 +1,4 @@
-let version = "1.0.3";
+let version = "1.0.4";
 // Office.js initialization
 console.log('version: '+ version);
 
@@ -84,7 +84,7 @@ function checkApiSupport() {
     const apiSupportElement = document.getElementById("api-support-info");
     
     // Örneğin, SSO için gerekli olan IdentityAPI 1.3'ü kontrol edelim
-    const isIdentityApiSupported = Office.context.requirements.isSetSupported('IdentityAPI', '1.6');
+    const isIdentityApiSupported = Office.context.requirements.isSetSupported('IdentityAPI', '1.4');
 
     if (isIdentityApiSupported) {
         apiSupportElement.innerHTML = `<p style="color: green;">✅ Kimlik Doğrulama API'si (IdentityAPI 1.3) bu platformda <strong>destekleniyor</strong>.</p>`;
