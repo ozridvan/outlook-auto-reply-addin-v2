@@ -39,17 +39,6 @@
   <Rule xsi:type="RuleCollection" Mode="Or">
     <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
   </Rule>
-  
-  <WebApplicationInfo>
-    <Id>c2a8b650-50b2-446e-a8e9-bffa6698b77f</Id>
-    <Resource>api://c2a8b650-50b2-446e-a8e9-bffa6698b77f</Resource>
-    <Scopes>
-        <Scope>User.Read</Scope>
-        <Scope>profile</Scope>
-        <Scope>openid</Scope>
-        <Scope>email</Scope>
-    </Scopes>
-  </WebApplicationInfo>
 
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
     <Requirements>
