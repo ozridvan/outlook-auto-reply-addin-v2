@@ -23,8 +23,8 @@ const createSimplePNG = (size) => {
   return pngData;
 };
 
-// Create icon files
-const sizes = [16, 32, 80];
+// Create icon files - including required sizes for manifest validation
+const sizes = [16, 32, 64, 80, 128];
 sizes.forEach(size => {
   const pngData = createSimplePNG(size);
   fs.writeFileSync(`assets/icon-${size}.png`, pngData);

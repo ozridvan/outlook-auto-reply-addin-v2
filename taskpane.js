@@ -440,27 +440,60 @@ async function setAutoReply(event) {
     }
 }
 
-// Get user profile information
-function getUserProfile() {
-    return new Promise((resolve, reject) => {
-        console.log('getUserProfile:' + Office.context.mailbox.userProfile.displayName);
+// Get user profile information using Microsoft Graph API
+async function getUserProfile() {
+    try {
+        // 1. Adım: Office'ten SSO token'ını al. 
+        // Bu token, Graph API'ye erişim için yeterli değildir, "bootstrap token" olarak geçer.
+        // allowSignInPrompt: true -> Gerekirse kullanıcıya oturum açma/onay ekranı gösterir.
+        const bootstrapToken = await Office.auth.getAccessToken({ allowSignInPrompt: true });
+
+        // 2. Adım: Alınan token ile Graph API'nin "/me" endpoint'ine istek gönder.
+        // Bu endpoint, oturum açmış kullanıcının bilgilerini döndürür.
+        const response = await fetch("https://graph.microsoft.com/v1.0/me?$select=displayName,mail,jobTitle", {
+            headers: {
+                "Authorization": "Bearer " + bootstrapToken
+            }
+        });
+
+        if (response.ok) {
+            const userData = await response.json();
+            
+            // 3. Adım: Gelen veriyi döndür.
+            console.log('Graph API user data:', userData);
+            return {
+                displayName: userData.displayName || 'Kullanıcı',
+                emailAddress: userData.mail || 'user@oztiryakiler.com.tr',
+                jobTitle: userData.jobTitle || 'Pozisyon'
+            };
+        } else {
+            // Hata durumunu yönet - Office context'e geri dön
+            console.error("Graph API isteği başarısız oldu: " + response.status);
+            throw new Error('Graph API failed');
+        }
+
+    } catch (exception) {
+        // Token alma sırasında bir hata oluşursa Office context'i kullan
+        console.error("Graph API hatası, Office context'e geçiliyor: " + JSON.stringify(exception));
+        
+        // Fallback to Office context
         if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox && Office.context.mailbox.userProfile) {
-            // userProfile is a direct property, not a method
             const userProfile = Office.context.mailbox.userProfile;
-            resolve({
+            console.log('Office context user profile:', userProfile.displayName);
+            return {
                 displayName: userProfile.displayName || 'Kullanıcı',
                 emailAddress: userProfile.emailAddress || 'user@oztiryakiler.com.tr',
                 jobTitle: userProfile.jobTitle || 'Pozisyon'
-            });
+            };
         } else {
-            // Fallback for testing or when Office context is not available
-            resolve({
+            // Final fallback for testing or when Office context is not available
+            return {
                 displayName: 'Test Kullanıcısı',
                 emailAddress: 'test@oztiryakiler.com.tr',
                 jobTitle: 'Test Pozisyonu'
-            });
+            };
         }
-    });
+    }
 }
 
 // Set Outlook automatic reply - Try Graph API first, then EWS as fallback
