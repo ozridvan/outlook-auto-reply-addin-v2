@@ -12,7 +12,7 @@
   <Description DefaultValue="Şirket standart otomatik yanıt mesajları için gelişmiş yönetici"/>
   <IconUrl DefaultValue="https://zealous-coast-0823e701e.2.azurestaticapps.net/assets/icon-64.png"/>
   <HighResolutionIconUrl DefaultValue="https://zealous-coast-0823e701e.2.azurestaticapps.net/assets/icon-128.png"/>
-  <SupportUrl DefaultValue="https://zealous-coast-0823e701e.2.azurestaticapps.net"/>
+  <SupportUrl DefaultValue="https://github.com/ozridvan/outlook-auto-reply-addin-v2"/>
 
   <Hosts>
     <Host Name="Mailbox"/>
