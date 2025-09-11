@@ -11,8 +11,8 @@
   <DefaultLocale>tr-TR</DefaultLocale>
   <DisplayName DefaultValue="Otomatik Yanıt Yöneticisi"/>
   <Description DefaultValue="Şirket standart otomatik yanıt mesajları için gelişmiş yönetici"/>
-  <IconUrl DefaultValue="https://raw.githubusercontent.com/OfficeDev/Office-Add-in-samples/main/Samples/hello-world/outlook-hello-world/assets/icon-64.png"/>
-  <HighResolutionIconUrl DefaultValue="https://raw.githubusercontent.com/OfficeDev/Office-Add-in-samples/main/Samples/hello-world/outlook-hello-world/assets/icon-128.png"/>
+  <IconUrl DefaultValue="https://ozridvan.github.io/outlook-auto-reply-addin-v2/assets/icon-64.png"/>
+  <HighResolutionIconUrl DefaultValue="https://ozridvan.github.io/outlook-auto-reply-addin-v2/assets/icon-128.png"/>
   <SupportUrl DefaultValue="https://github.com/ozridvan/outlook-auto-reply-addin-v2"/>
   
   <Hosts>
