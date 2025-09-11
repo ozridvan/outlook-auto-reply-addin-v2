@@ -1,4 +1,4 @@
-let version = "1.0.5";
+let version = "1.0.6";
 // Office.js initialization
 console.log('version: '+ version);
 
@@ -15,7 +15,7 @@ Office.onReady((info) => {
 async function checkOOFStatusNew() {    
     try {
         // Microsoft Graph API çağrısı (REST)
-        Office.context.mailbox.getCallbackTokenAsync({isRest: true}, function(result) {
+        Office.context.mailbox.getCallbackTokenAsync( function(result) {
             if (result.status === "succeeded") {
                 var accessToken = result.value;
                 console.log("accessToken: ", accessToken);
