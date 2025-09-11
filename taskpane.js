@@ -1,4 +1,14 @@
-let version = "1.0.6";
+let version = "1.0.7";
+
+// Authentication configuration
+const AUTH_CONFIG = {
+    clientId: 'c2a8b650-50b2-446e-a8e9-bffa6698b77f', // This needs to be replaced with actual Azure App ID
+    scopes: [
+        'https://graph.microsoft.com/User.Read',
+        'https://graph.microsoft.com/MailboxSettings.ReadWrite',
+        'https://graph.microsoft.com/People.Read'
+    ]
+};
 // Office.js initialization
 console.log('version: '+ version);
 
@@ -12,29 +22,136 @@ Office.onReady((info) => {
     }
 });
 
+// Enhanced authentication manager
+class AuthenticationManager {
+    constructor() {
+        this.accessToken = null;
+        this.tokenExpiry = null;
+        this.isSSO = false;
+    }
+
+    async getAccessToken(options = {}) {
+        const defaultOptions = {
+            allowSignInPrompt: true,
+            allowConsentPrompt: true,
+            forMSGraphAccess: true,
+            ...options
+        };
+
+        try {
+            // Check if we have a valid cached token
+            if (this.accessToken && this.tokenExpiry && new Date() < this.tokenExpiry) {
+                console.log('Using cached SSO token');
+                return this.accessToken;
+            }
+
+            // Try SSO first
+            console.log('Attempting SSO authentication...');
+            const token = await Office.auth.getAccessToken(defaultOptions);
+            
+            // Cache the token (typically valid for 1 hour)
+            this.accessToken = token;
+            this.tokenExpiry = new Date(Date.now() + 50 * 60 * 1000); // 50 minutes
+            this.isSSO = true;
+            
+            console.log('SSO authentication successful');
+            return token;
+            
+        } catch (error) {
+            console.error('SSO authentication failed:', error);
+            
+            // Handle specific error codes
+            if (error.code === 13000) {
+                throw new Error('SSO is not supported on this platform. Please use Outlook on the web or desktop.');
+            } else if (error.code === 13001) {
+                throw new Error('User is not signed in to Office.');
+            } else if (error.code === 13002) {
+                throw new Error('User consent is required.');
+            } else if (error.code === 13003) {
+                throw new Error('User consent was not granted.');
+            } else if (error.code === 13006) {
+                throw new Error('Current user is not in a supported Microsoft 365 subscription.');
+            } else if (error.code === 13012) {
+                throw new Error('Add-in is not configured for SSO. Please check manifest configuration.');
+            }
+            
+            // Try fallback authentication methods
+            return await this.tryFallbackAuth();
+        }
+    }
+
+    async tryFallbackAuth() {
+        console.log('Trying fallback authentication methods...');
+        
+        try {
+            // Try using OfficeRuntime.auth if available (newer Office versions)
+            if (typeof OfficeRuntime !== 'undefined' && OfficeRuntime.auth) {
+                console.log('Trying OfficeRuntime.auth...');
+                const token = await OfficeRuntime.auth.getAccessToken({
+                    allowSignInPrompt: true,
+                    allowConsentPrompt: true,
+                    forMSGraphAccess: true
+                });
+                
+                this.accessToken = token;
+                this.tokenExpiry = new Date(Date.now() + 50 * 60 * 1000);
+                this.isSSO = true;
+                
+                console.log('OfficeRuntime.auth successful');
+                return token;
+            }
+        } catch (runtimeError) {
+            console.error('OfficeRuntime.auth failed:', runtimeError);
+        }
+        
+        // If all methods fail, throw an informative error
+        throw new Error('Authentication failed. SSO is not supported on this platform. Please use Outlook on the web or a newer version of Outlook desktop.');
+    }
+
+    clearToken() {
+        this.accessToken = null;
+        this.tokenExpiry = null;
+        this.isSSO = false;
+    }
+
+    isAuthenticated() {
+        return this.accessToken && this.tokenExpiry && new Date() < this.tokenExpiry;
+    }
+}
+
+// Global authentication manager instance
+const authManager = new AuthenticationManager();
+
 async function checkOOFStatusNew() {    
     try {
-        // Microsoft Graph API çağrısı (REST)
-        Office.context.mailbox.getCallbackTokenAsync( function(result) {
-            if (result.status === "succeeded") {
-                var accessToken = result.value;
-                console.log("accessToken: ", accessToken);
-                // Graph API ile OOF durumu alma
-                fetch('https://graph.microsoft.com/v1.0/me/mailboxSettings/automaticRepliesSetting', {
-                    headers: {
-                        'Authorization': 'Bearer ' + accessToken,
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // OOF durumu: data.status (disabled, alwaysEnabled, scheduled)
-                });
+        console.log('Checking OOF status with new authentication...');
+        
+        const token = await authManager.getAccessToken({ allowSignInPrompt: false });
+        
+        const response = await fetch('https://graph.microsoft.com/v1.0/me/mailboxSettings/automaticRepliesSetting', {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
             }
         });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('OOF Status:', data);
+            
+            if (data.status === 'enabled' || data.status === 'scheduled') {
+                showOofStatusBanner(data);
+            }
+        } else {
+            console.error('Failed to get OOF status:', response.status, response.statusText);
+        }
+        
     } catch (error) {
         console.error('Error checking OOF status:', error);
-        showStatus('error', 'Otomatik yanıt durumu kontrol edilemedi: ' + error.message);
+        // Don't show error for initial check - it's not critical
+        if (error.message.includes('not supported')) {
+            console.log('OOF status check skipped - SSO not supported on this platform');
+        }
     }
 }
 
@@ -110,13 +227,105 @@ function getOutlookClientInfo() {
 function checkApiSupport() {
     const apiSupportElement = document.getElementById("api-support-info");
     
-    // Örneğin, SSO için gerekli olan IdentityAPI 1.3'ü kontrol edelim
-    const isIdentityApiSupported = Office.context.requirements.isSetSupported('IdentityAPI', '1.4');
+    // Check IdentityAPI support
+    const isIdentityApiSupported = Office.context.requirements.isSetSupported('IdentityAPI', '1.3');
 
     if (isIdentityApiSupported) {
         apiSupportElement.innerHTML = `<p style="color: green;">✅ Kimlik Doğrulama API'si (IdentityAPI 1.3) bu platformda <strong>destekleniyor</strong>.</p>`;
     } else {
         apiSupportElement.innerHTML = `<p style="color: orange;">❌ Kimlik Doğrulama API'si (IdentityAPI 1.3) bu platformda <strong>desteklenmiyor</strong>.</p>`;
+    }
+    
+    // Check authentication status
+    checkAuthenticationStatus();
+}
+
+// Check and display authentication status
+async function checkAuthenticationStatus() {
+    const authStatusElement = document.getElementById("auth-status-info");
+    
+    try {
+        // Try to get access token without prompting user
+        const token = await authManager.getAccessToken({ allowSignInPrompt: false });
+        
+        if (token) {
+            authStatusElement.innerHTML = `
+                <p style="color: green;">✅ <strong>Kimlik doğrulama başarılı</strong></p>
+                <p style="font-size: 12px; color: #605e5c;">Microsoft Graph API'ye erişim sağlandı</p>
+                <button onclick="testGraphConnection()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Bağlantıyı Test Et</button>
+            `;
+        }
+    } catch (error) {
+        console.log('Authentication check failed:', error);
+        
+        let errorMessage = 'Kimlik doğrulama gerekli';
+        let errorColor = 'orange';
+        let actionButton = '';
+        
+        if (error.message.includes('not supported')) {
+            errorMessage = 'SSO bu platformda desteklenmiyor';
+            errorColor = 'red';
+        } else if (error.message.includes('not signed in')) {
+            errorMessage = 'Office\'e giriş yapılmamış';
+            actionButton = '<button onclick="attemptSignIn()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Giriş Yap</button>';
+        } else {
+            actionButton = '<button onclick="attemptSignIn()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Kimlik Doğrula</button>';
+        }
+        
+        authStatusElement.innerHTML = `
+            <p style="color: ${errorColor};">⚠️ <strong>${errorMessage}</strong></p>
+            <p style="font-size: 12px; color: #605e5c;">${error.message}</p>
+            ${actionButton}
+        `;
+    }
+}
+
+// Test Graph API connection
+async function testGraphConnection() {
+    const authStatusElement = document.getElementById("auth-status-info");
+    
+    try {
+        authStatusElement.innerHTML = '<p>🔄 Bağlantı test ediliyor...</p>';
+        
+        const userProfile = await getUserProfile();
+        
+        authStatusElement.innerHTML = `
+            <p style="color: green;">✅ <strong>Graph API bağlantısı başarılı</strong></p>
+            <p style="font-size: 12px; color: #605e5c;">Kullanıcı: ${userProfile.displayName}</p>
+            <p style="font-size: 12px; color: #605e5c;">E-posta: ${userProfile.emailAddress}</p>
+            <button onclick="checkAuthenticationStatus()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Yenile</button>
+        `;
+    } catch (error) {
+        authStatusElement.innerHTML = `
+            <p style="color: red;">❌ <strong>Bağlantı testi başarısız</strong></p>
+            <p style="font-size: 12px; color: #605e5c;">${error.message}</p>
+            <button onclick="checkAuthenticationStatus()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Tekrar Dene</button>
+        `;
+    }
+}
+
+// Attempt to sign in
+async function attemptSignIn() {
+    const authStatusElement = document.getElementById("auth-status-info");
+    
+    try {
+        authStatusElement.innerHTML = '<p>🔄 Giriş yapılıyor...</p>';
+        
+        const token = await authManager.getAccessToken({ allowSignInPrompt: true });
+        
+        if (token) {
+            authStatusElement.innerHTML = `
+                <p style="color: green;">✅ <strong>Giriş başarılı</strong></p>
+                <p style="font-size: 12px; color: #605e5c;">Microsoft Graph API'ye erişim sağlandı</p>
+                <button onclick="testGraphConnection()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Bağlantıyı Test Et</button>
+            `;
+        }
+    } catch (error) {
+        authStatusElement.innerHTML = `
+            <p style="color: red;">❌ <strong>Giriş başarısız</strong></p>
+            <p style="font-size: 12px; color: #605e5c;">${error.message}</p>
+            <button onclick="checkAuthenticationStatus()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Tekrar Dene</button>
+        `;
     }
 }
 
@@ -244,14 +453,12 @@ const mockColleagues = [
     }
 ];
 
-// Check current OOF status using Graph API
+// Check current OOF status using Graph API with new authentication
 async function checkCurrentOofStatus() {
     try {
-        const token = await OfficeRuntime.auth.getAccessToken({
-            allowSignInPrompt: false, 
-            allowConsentPrompt: false, 
-            forMSGraphAccess: true
-        });
+        console.log('Checking current OOF status...');
+        
+        const token = await authManager.getAccessToken({ allowSignInPrompt: false });
         
         const response = await fetch('https://graph.microsoft.com/v1.0/me/mailboxSettings', {
             method: 'GET',
@@ -265,9 +472,13 @@ async function checkCurrentOofStatus() {
             const data = await response.json();
             const oofSettings = data.automaticRepliesSetting;
             
+            console.log('Current OOF settings:', oofSettings);
+            
             if (oofSettings && (oofSettings.status === 'enabled' || oofSettings.status === 'scheduled')) {
                 showOofStatusBanner(oofSettings);
             }
+        } else {
+            console.error('Failed to get mailbox settings:', response.status, response.statusText);
         }
     } catch (error) {
         console.log('Could not check OOF status:', error);
@@ -331,16 +542,15 @@ async function setupColleagueSearch() {
     });
 }
 
-// Search users via Graph API
+// Search users via Graph API with new authentication
 async function searchUsers(query) {
     try {
-        const token = await OfficeRuntime.auth.getAccessToken({
-            allowSignInPrompt: true, 
-            allowConsentPrompt: true, 
-            forMSGraphAccess: true
-        });
+        console.log('Searching users with query:', query);
         
-        const response = await fetch(`https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'${query}') or startswith(givenName,'${query}') or startswith(surname,'${query}')&$select=id,displayName,mail,jobTitle,department&$top=10`, {
+        const token = await authManager.getAccessToken();
+        
+        const encodedQuery = encodeURIComponent(query);
+        const response = await fetch(`https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'${encodedQuery}') or startswith(givenName,'${encodedQuery}') or startswith(surname,'${encodedQuery}')&$select=id,displayName,mail,userPrincipalName,jobTitle,department,businessPhones&$top=10`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -350,13 +560,18 @@ async function searchUsers(query) {
         
         if (response.ok) {
             const data = await response.json();
+            console.log('User search results:', data.value);
+            
             return data.value.map(user => ({
                 id: user.id,
                 name: user.displayName,
                 email: user.mail || user.userPrincipalName,
                 department: user.department || 'Bilinmiyor',
-                phone: '+90 212 555 0100' // Default phone for now
+                phone: user.businessPhones && user.businessPhones.length > 0 ? user.businessPhones[0] : '+90 212 555 0100'
             }));
+        } else {
+            console.error('User search failed:', response.status, response.statusText);
+            throw new Error(`User search failed: ${response.status}`);
         }
     } catch (error) {
         console.error('Graph API user search failed:', error);
@@ -525,7 +740,7 @@ async function setAutoReply(event) {
             .replaceAll('{phone}', selectedColleague.phone)
             .replaceAll('{userName}', userProfile.displayName || 'Kullanıcı')
             .replaceAll('{position}', userProfile.jobTitle || 'Pozisyon')
-            .replaceAll('{company}', 'Öztiryakiler');
+            .replaceAll('{company}', userProfile.companyName || 'Öztiryakiler');
         
         // Set the automatic reply using Graph API
         console.log('setOutlookAutoReply before');
@@ -551,57 +766,56 @@ async function setAutoReply(event) {
     }
 }
 
-// Get user profile information using Microsoft Graph API
+// Get user profile information using Microsoft Graph API with new authentication
 async function getUserProfile() {
     try {
-        // 1. Adım: Office'ten SSO token'ını al. 
-        // Bu token, Graph API'ye erişim için yeterli değildir, "bootstrap token" olarak geçer.
-        // allowSignInPrompt: true -> Gerekirse kullanıcıya oturum açma/onay ekranı gösterir.
-        const bootstrapToken = await Office.auth.getAccessToken({ allowSignInPrompt: true });
+        console.log('Getting user profile...');
+        
+        const token = await authManager.getAccessToken();
 
-        // 2. Adım: Alınan token ile Graph API'nin "/me" endpoint'ine istek gönder.
-        // Bu endpoint, oturum açmış kullanıcının bilgilerini döndürür.
-        const response = await fetch("https://graph.microsoft.com/v1.0/me?$select=displayName,mail,jobTitle", {
+        const response = await fetch("https://graph.microsoft.com/v1.0/me?$select=displayName,mail,userPrincipalName,jobTitle,companyName", {
             headers: {
-                "Authorization": "Bearer " + bootstrapToken
+                "Authorization": "Bearer " + token,
+                "Content-Type": "application/json"
             }
         });
 
         if (response.ok) {
             const userData = await response.json();
             
-            // 3. Adım: Gelen veriyi döndür.
             console.log('Graph API user data:', userData);
             return {
                 displayName: userData.displayName || 'Kullanıcı',
-                emailAddress: userData.mail || 'user@oztiryakiler.com.tr',
-                jobTitle: userData.jobTitle || 'Pozisyon'
+                emailAddress: userData.mail || userData.userPrincipalName || 'user@oztiryakiler.com.tr',
+                jobTitle: userData.jobTitle || '',
+                companyName: userData.companyName || 'Öztiryakiler'
             };
         } else {
-            // Hata durumunu yönet - Office context'e geri dön
-            console.error("Graph API isteği başarısız oldu: " + response.status);
-            throw new Error('Graph API failed');
+            console.error("Graph API user profile request failed:", response.status, response.statusText);
+            throw new Error(`Graph API failed: ${response.status}`);
         }
 
     } catch (exception) {
-        // Token alma sırasında bir hata oluşursa Office context'i kullan
-        console.error("Graph API hatası, Office context'e geçiliyor: " + JSON.stringify(exception));
+        console.error("Graph API error, falling back to Office context:", exception);
         
         // Fallback to Office context
         if (typeof Office !== 'undefined' && Office.context && Office.context.mailbox && Office.context.mailbox.userProfile) {
             const userProfile = Office.context.mailbox.userProfile;
-            console.log('Office context user profile:', userProfile.displayName);
+            console.log('Using Office context user profile:', userProfile.displayName);
             return {
                 displayName: userProfile.displayName || 'Kullanıcı',
                 emailAddress: userProfile.emailAddress || 'user@oztiryakiler.com.tr',
-                jobTitle: userProfile.jobTitle || 'Pozisyon'
+                jobTitle: userProfile.jobTitle || '',
+                companyName: 'Öztiryakiler'
             };
         } else {
             // Final fallback for testing or when Office context is not available
+            console.log('Using fallback user profile');
             return {
                 displayName: 'Test Kullanıcısı',
                 emailAddress: 'test@oztiryakiler.com.tr',
-                jobTitle: 'Test Pozisyonu'
+                jobTitle: '',
+                companyName: 'Öztiryakiler'
             };
         }
     }
@@ -626,14 +840,26 @@ async function setOutlookAutoReply(messageBody, startDateTime, endDateTime) {
     }
 }
 
-// 1) GRAPH ile dene, olmazsa EWS'ye düş (with SET → GET verification)
+// Enhanced automatic reply setting with new authentication
 async function setAutomaticReply(startLocal, endLocal, internalMsg, externalMsg) {
   try {
-    const token = await OfficeRuntime.auth.getAccessToken({
-      allowSignInPrompt: true, allowConsentPrompt: true, forMSGraphAccess: true
-    });
+    console.log('Setting automatic reply via Graph API...');
+    
+    const token = await authManager.getAccessToken();
     await setOOFViaGraph(token, startLocal, endLocal, internalMsg, externalMsg);
-    return "graph";
+    
+    // Verify the setting was applied
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+    const verification = await verifyOOFViaGraph(token);
+    
+    if (verification && (verification.status === 'scheduled' || verification.status === 'enabled')) {
+        console.log('Graph API OOF setting verified successfully');
+        return "graph";
+    } else {
+        console.log('Graph API verification failed, trying EWS fallback');
+        throw new Error('Graph API verification failed');
+    }
+    
   } catch (graphError) {
     console.log('Graph API failed, trying EWS:', graphError);
     
@@ -655,6 +881,27 @@ async function setAutomaticReply(startLocal, endLocal, internalMsg, externalMsg)
       throw ewsError;
     }
   }
+}
+
+// Verify OOF setting via Graph API
+async function verifyOOFViaGraph(token) {
+    try {
+        const response = await fetch('https://graph.microsoft.com/v1.0/me/mailboxSettings/automaticRepliesSetting', {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('OOF verification result:', data);
+            return data;
+        }
+    } catch (error) {
+        console.error('OOF verification failed:', error);
+    }
+    return null;
 }
 
 // 2) GRAPH (hazır olduğunda)
