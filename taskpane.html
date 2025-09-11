@@ -231,11 +231,65 @@
         .copy-button:hover {
             background-color: #e1dfdd;
         }
+        
+        .oof-status-banner {
+            background-color: #fff4e6;
+            border: 1px solid #ffb366;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 16px;
+            color: #cc7a00;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .oof-status-banner.active {
+            background-color: #fff4e6;
+            border-color: #ffb366;
+        }
+        
+        .colleague-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #d1d1d1;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .colleague-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f3f2f1;
+        }
+        
+        .colleague-item:hover {
+            background-color: #f3f2f1;
+        }
+        
+        .colleague-item.selected {
+            background-color: #0078d4;
+            color: white;
+        }
+        
+        .form-group {
+            position: relative;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <div id="oofStatusBanner" class="oof-status-banner" style="display: none;">
+            <span id="oofStatusText">📧 Otomatik yanıt şu anda aktif</span>
+        </div>
+        
         <div class="header">
             <h1>🏢 Otomatik Yanıt Yöneticisi</h1>
         </div>
@@ -244,9 +298,8 @@
         <form id="autoReplyForm">
             <div class="form-group">
                 <label for="colleague">Yetkili Kişi:</label>
-                <select id="colleague" class="form-control" required>
-                    <option value="">Seçiniz...</option>
-                </select>
+                <input type="text" id="colleague" class="form-control" placeholder="Kişi ara..." autocomplete="off" required>
+                <div id="colleagueDropdown" class="colleague-dropdown" style="display: none;"></div>
             </div>
             
             <div class="form-group">
