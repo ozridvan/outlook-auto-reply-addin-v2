@@ -30,7 +30,8 @@ function initializeApp() {
         form.addEventListener('submit', setAutoReply);
     }
     
-    loadColleagues();
+    checkCurrentOofStatus();
+    setupColleagueSearch();
     setupFormListeners();
     setDefaultDates();
     updateVersionInfo();
@@ -38,6 +39,7 @@ function initializeApp() {
 
 // Global variables
 let colleagues = [];
+let selectedColleague = null;
 
 // Message template (both Turkish and English)
 const messageTemplate = {
@@ -131,29 +133,157 @@ const mockColleagues = [
     }
 ];
 
-function loadColleagues() {
-    console.log('Loading colleagues...');
-    // In production, this would be an API call to D365
-    colleagues = mockColleagues;
-    console.log('Colleagues loaded:', colleagues.length);
+// Check current OOF status using Graph API
+async function checkCurrentOofStatus() {
+    try {
+        const token = await OfficeRuntime.auth.getAccessToken({
+            allowSignInPrompt: false, 
+            allowConsentPrompt: false, 
+            forMSGraphAccess: true
+        });
+        
+        const response = await fetch('https://graph.microsoft.com/v1.0/me/mailboxSettings', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const oofSettings = data.automaticRepliesSetting;
+            
+            if (oofSettings && (oofSettings.status === 'enabled' || oofSettings.status === 'scheduled')) {
+                showOofStatusBanner(oofSettings);
+            }
+        }
+    } catch (error) {
+        console.log('Could not check OOF status:', error);
+        // Silently fail - not critical for app functionality
+    }
+}
+
+// Show OOF status banner
+function showOofStatusBanner(oofSettings) {
+    const banner = document.getElementById('oofStatusBanner');
+    const text = document.getElementById('oofStatusText');
     
-    const colleagueSelect = document.getElementById('colleague');
-    if (!colleagueSelect) {
-        console.error('Colleague select element not found!');
+    if (banner && text) {
+        let statusText = '📧 Otomatik yanıt şu anda aktif';
+        
+        if (oofSettings.status === 'scheduled' && oofSettings.scheduledEndDateTime) {
+            const endDate = new Date(oofSettings.scheduledEndDateTime.dateTime);
+            const endDateStr = endDate.toLocaleDateString('tr-TR');
+            statusText += ` (${endDateStr} tarihine kadar)`;
+        }
+        
+        text.textContent = statusText;
+        banner.style.display = 'block';
+        banner.classList.add('active');
+    }
+}
+
+// Setup colleague search functionality
+async function setupColleagueSearch() {
+    const colleagueInput = document.getElementById('colleague');
+    const dropdown = document.getElementById('colleagueDropdown');
+    
+    if (!colleagueInput || !dropdown) return;
+    
+    colleagueInput.addEventListener('input', async (e) => {
+        const query = e.target.value.trim();
+        
+        if (query.length < 2) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        try {
+            const users = await searchUsers(query);
+            displayUserResults(users, dropdown, colleagueInput);
+        } catch (error) {
+            console.error('Error searching users:', error);
+            // Fallback to mock data
+            const filtered = mockColleagues.filter(c => 
+                c.name.toLowerCase().includes(query.toLowerCase())
+            );
+            displayUserResults(filtered, dropdown, colleagueInput);
+        }
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!colleagueInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
+// Search users via Graph API
+async function searchUsers(query) {
+    try {
+        const token = await OfficeRuntime.auth.getAccessToken({
+            allowSignInPrompt: true, 
+            allowConsentPrompt: true, 
+            forMSGraphAccess: true
+        });
+        
+        const response = await fetch(`https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'${query}') or startswith(givenName,'${query}') or startswith(surname,'${query}')&$select=id,displayName,mail,jobTitle,department&$top=10`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data.value.map(user => ({
+                id: user.id,
+                name: user.displayName,
+                email: user.mail || user.userPrincipalName,
+                department: user.department || 'Bilinmiyor',
+                phone: '+90 212 555 0100' // Default phone for now
+            }));
+        }
+    } catch (error) {
+        console.error('Graph API user search failed:', error);
+        throw error;
+    }
+    
+    return [];
+}
+
+// Display user search results
+function displayUserResults(users, dropdown, input) {
+    dropdown.innerHTML = '';
+    
+    if (users.length === 0) {
+        dropdown.innerHTML = '<div class="colleague-item">Kullanıcı bulunamadı</div>';
+        dropdown.style.display = 'block';
         return;
     }
     
-    colleagueSelect.innerHTML = '<option value="">Seçiniz...</option>';
-    
-    colleagues.forEach(colleague => {
-        const option = document.createElement('option');
-        option.value = colleague.id;
-        option.textContent = `${colleague.name} (${colleague.department})`;
-        colleagueSelect.appendChild(option);
-        // console.log('Added colleague:', colleague.name);
+    users.forEach(user => {
+        const item = document.createElement('div');
+        item.className = 'colleague-item';
+        item.innerHTML = `
+            <div><strong>${user.name}</strong></div>
+            <div style="font-size: 12px; color: #605e5c;">${user.department} - ${user.email}</div>
+        `;
+        
+        item.addEventListener('click', () => {
+            selectedColleague = user;
+            input.value = user.name;
+            dropdown.style.display = 'none';
+            updatePreview();
+        });
+        
+        dropdown.appendChild(item);
     });
     
-    console.log('Colleagues loaded successfully, total options:', colleagueSelect.options.length);
+    dropdown.style.display = 'block';
 }
 
 function setupFormListeners() {
@@ -206,7 +336,7 @@ function formatDisplayDate(dateStr, timeStr) {
 }
 
 function updatePreview() {
-    const colleagueId = document.getElementById('colleague').value;
+    const colleagueInput = document.getElementById('colleague').value;
     const startDate = document.getElementById('startDate').value;
     const startTime = document.getElementById('startTime').value;
     const endDate = document.getElementById('endDate').value;
@@ -214,12 +344,10 @@ function updatePreview() {
     
     const previewDiv = document.getElementById('messagePreview');
     
-    if (!colleagueId || !startDate || !startTime || !endDate || !endTime) {
+    if (!selectedColleague || !startDate || !startTime || !endDate || !endTime) {
         previewDiv.textContent = 'Lütfen tüm alanları doldurun...';
         return;
     }
-    
-    const colleague = colleagues.find(c => c.id == colleagueId);
     
     const startDateTime = formatDisplayDate(startDate, startTime);
     const endDateTime = formatDisplayDate(endDate, endTime);
@@ -234,9 +362,9 @@ function updatePreview() {
     let messageBody = messageTemplate.body
         .replaceAll('{startDate}', startDateTime)
         .replaceAll('{endDate}', endDateTime)
-        .replaceAll('{colleagueName}', colleague.name)
-        .replaceAll('{email}', colleague.email)
-        .replaceAll('{phone}', colleague.phone)
+        .replaceAll('{colleagueName}', selectedColleague.name)
+        .replaceAll('{email}', selectedColleague.email)
+        .replaceAll('{phone}', selectedColleague.phone)
         .replaceAll('{userName}', currentUser.name)
         .replaceAll('{position}', currentUser.position)
         .replaceAll('{company}', currentUser.company);
@@ -247,18 +375,16 @@ function updatePreview() {
 async function setAutoReply(event) {
     event.preventDefault();
     
-    const colleagueId = document.getElementById('colleague').value;
+    const colleagueInput = document.getElementById('colleague').value;
     const startDate = document.getElementById('startDate').value;
     const startTime = document.getElementById('startTime').value;
     const endDate = document.getElementById('endDate').value;
     const endTime = document.getElementById('endTime').value;
     
-    if (!colleagueId || !startDate || !startTime || !endDate || !endTime) {
+    if (!selectedColleague || !startDate || !startTime || !endDate || !endTime) {
         showStatus('error', 'Lütfen tüm alanları doldurun!');
         return;
     }
-    
-    const colleague = colleagues.find(c => c.id == colleagueId);
     
     const startDateTime = new Date(startDate + 'T' + startTime);
     const endDateTime = new Date(endDate + 'T' + endTime);
@@ -283,9 +409,9 @@ async function setAutoReply(event) {
         let messageBody = messageTemplate.body
             .replaceAll('{startDate}', startDateTimeFormatted)
             .replaceAll('{endDate}', endDateTimeFormatted)
-            .replaceAll('{colleagueName}', colleague.name)
-            .replaceAll('{email}', colleague.email)
-            .replaceAll('{phone}', colleague.phone)
+            .replaceAll('{colleagueName}', selectedColleague.name)
+            .replaceAll('{email}', selectedColleague.email)
+            .replaceAll('{phone}', selectedColleague.phone)
             .replaceAll('{userName}', userProfile.displayName || 'Kullanıcı')
             .replaceAll('{position}', userProfile.jobTitle || 'Pozisyon')
             .replaceAll('{company}', 'Öztiryakiler');
