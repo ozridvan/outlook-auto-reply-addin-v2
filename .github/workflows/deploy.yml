@@ -1,32 +1,32 @@
-name: Deploy Outlook Addin
+# name: Deploy Outlook Addin
 
-on:
-  push:
-    branches:
-      - master
-      - main
+# on:
+#   push:
+#     branches:
+#       - master
+#       - main
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v2
+#         with:
+#           node-version: '16'
 
-      - name: Install Dependencies
-        run: npm install
+#       - name: Install Dependencies
+#         run: npm install
 
-      - name: Set Git Identity for gh-pages
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
+#       - name: Set Git Identity for gh-pages
+#         run: |
+#           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+#           git config --global user.name "github-actions[bot]"
 
-      - name: Deploy to GitHub Pages
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: npm run deploy
+#       - name: Deploy to GitHub Pages
+#         env:
+#           GH_PAT: ${{ secrets.GH_PAT }}
+#         run: npm run deploy
