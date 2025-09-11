@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 import os
 
 def create_icon(size, filename):
@@ -32,12 +32,8 @@ def create_icon(size, filename):
     img.save(filename, 'PNG')
     print(f"Created {filename}")
 
-# Create icons
-os.makedirs('assets', exist_ok=True)
-create_icon(16, 'assets/icon-16.png')
-create_icon(32, 'assets/icon-32.png')
-create_icon(64, 'assets/icon-64.png')  # Required for manifest validation
-create_icon(80, 'assets/icon-80.png')
-create_icon(128, 'assets/icon-128.png')  # Required for manifest validation
+# Create the required icons for manifest validation
+create_icon(64, 'assets/icon-64.png')   # Standard icon requirement
+create_icon(128, 'assets/icon-128.png') # High resolution icon requirement
 
-print("All PNG icons created successfully!")
+print("Required icons created successfully!")
