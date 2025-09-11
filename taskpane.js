@@ -9,6 +9,88 @@ Office.onReady((info) => {
     }
 });
 
+async function displayVersionInfo() {
+    const versionInfoElement = document.getElementById("version-info");
+
+    try {
+        const clientInfo = getOutlookClientInfo();
+
+        // Alınan bilgileri kullanıcıya göstermek için HTML içeriğini oluştur
+        let htmlContent = `
+            <ul>
+                <li><strong>Uygulama:</strong> ${clientInfo.host}</li>
+                <li><strong>Versiyon:</strong> ${clientInfo.applicationVersion}</li>
+                <li><strong>Platform:</strong> ${clientInfo.platform}</li>
+            </ul>
+        `;
+        versionInfoElement.innerHTML = htmlContent;
+
+    } catch (error) {
+        versionInfoElement.innerHTML = `<p style="color: red;">Hata: ${error.message}</p>`;
+    }
+}
+
+/**
+ * Office.context.diagnostics nesnesinden istemci bilgilerini alır ve
+ * daha anlaşılır bir formatta bir nesne olarak döndürür.
+ * @returns {object} { host, applicationVersion, platform }
+ */
+function getOutlookClientInfo() {
+    // diagnostics API'sinin desteklenip desteklenmediğini kontrol et
+    if (!Office.context.diagnostics) {
+        throw new Error("Diagnostics API bu istemcide desteklenmiyor.");
+    }
+
+    let platform = "Bilinmiyor";
+    // Platform enum'ını daha okunabilir bir metne çevir
+    switch (Office.context.diagnostics.platform) {
+        case Office.PlatformType.PC:
+            platform = "Windows (Masaüstü)";
+            break;
+        case Office.PlatformType.Mac:
+            platform = "Mac (Masaüstü)";
+            break;
+        case Office.PlatformType.OfficeOnline:
+            platform = "Web (Tarayıcı)";
+            break;
+        case Office.PlatformType.iOS:
+            platform = "iOS (Mobil)";
+            break;
+        case Office.PlatformType.Android:
+            platform = "Android (Mobil)";
+            break;
+        default:
+            platform = "Diğer";
+            break;
+    }
+    
+    // Gerekli bilgileri bir nesne içinde topla
+    const clientInfo = {
+        host: Office.HostType[Office.context.diagnostics.host], // "Outlook" döner
+        applicationVersion: Office.context.diagnostics.version, // Örn: "16.0.12345.98765"
+        platform: platform
+    };
+
+    return clientInfo;
+}
+
+/**
+ * Geliştiriciler için daha faydalı bir kontrol: Belirli bir API setinin
+ * (Requirement Set) desteklenip desteklenmediğini kontrol eder.
+ */
+function checkApiSupport() {
+    const apiSupportElement = document.getElementById("api-support-info");
+    
+    // Örneğin, SSO için gerekli olan IdentityAPI 1.3'ü kontrol edelim
+    const isIdentityApiSupported = Office.context.requirements.isSetSupported('IdentityAPI', '1.3');
+
+    if (isIdentityApiSupported) {
+        apiSupportElement.innerHTML = `<p style="color: green;">✅ Kimlik Doğrulama API'si (IdentityAPI 1.3) bu platformda <strong>destekleniyor</strong>.</p>`;
+    } else {
+        apiSupportElement.innerHTML = `<p style="color: orange;">❌ Kimlik Doğrulama API'si (IdentityAPI 1.3) bu platformda <strong>desteklenmiyor</strong>.</p>`;
+    }
+}
+
 // Fallback initialization for testing in browser
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing app');
