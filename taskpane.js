@@ -1,4 +1,4 @@
-let version = "1.0.8";
+let version = "1.0.9";
 
 // Authentication configuration
 const AUTH_CONFIG = {
@@ -484,7 +484,7 @@ async function setupColleagueSearch() {
 
 async function getAccessToken() {
     try {
-        const token = "eyJ0eXAiOiJKV1QiLCJub25jZSI6IlRSR1hTS3NmX3lBaHRLcHItVjZuNkhhRzJzRXFSMzE2MDd1VEZ3N0dlRDQiLCJhbGciOiJSUzI1NiIsIng1dCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSIsImtpZCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8yNjM3MWI1ZS05NDhlLTQ3OTEtYTA1NS0wMDNjOTAzMDZiOGMvIiwiaWF0IjoxNzU3NjgzMDI0LCJuYmYiOjE3NTc2ODMwMjQsImV4cCI6MTc1NzY4NjkyNCwiYWlvIjoiazJSZ1lOajdSNG1wOE5wazlRK1NFbytFM3k4NkFRQT0iLCJhcHBfZGlzcGxheW5hbWUiOiJPdXRsb29rIE9PRiIsImFwcGlkIjoiYzJhOGI2NTAtNTBiMi00NDZlLWE4ZTktYmZmYTY2OThiNzdmIiwiYXBwaWRhY3IiOiIxIiwiaWRwIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvMjYzNzFiNWUtOTQ4ZS00NzkxLWEwNTUtMDAzYzkwMzA2YjhjLyIsImlkdHlwIjoiYXBwIiwib2lkIjoiMGNjNDdmYzUtYWQ1Mi00MTFlLTliN2QtYmU3ZThjYmQ3NjcxIiwicmgiOiIxLkFWd0FYaHMzSm82VWtVZWdWUUE4a0RCcmpBTUFBQUFBQUFBQXdBQUFBQUFBQUFCY0FBQmNBQS4iLCJyb2xlcyI6WyJQZW9wbGUuUmVhZC5BbGwiLCJVc2VyLlJlYWQuQWxsIl0sInN1YiI6IjBjYzQ3ZmM1LWFkNTItNDExZS05YjdkLWJlN2U4Y2JkNzY3MSIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJFVSIsInRpZCI6IjI2MzcxYjVlLTk0OGUtNDc5MS1hMDU1LTAwM2M5MDMwNmI4YyIsInV0aSI6IlhmYmxwaDNocDBDekxyUERkbk5JQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbIjA5OTdhMWQwLTBkMWQtNGFjYi1iNDA4LWQ1Y2E3MzEyMWU5MCJdLCJ4bXNfZnRkIjoiRWxDWkVhWUpZajZWa1d1NzZ6VTBHUzRXdU1IS3JnaXF0OC1CSkFrYkxYWUJjM2RsWkdWdVl5MWtjMjF6IiwieG1zX2lkcmVsIjoiNyAxMCIsInhtc19yZCI6IjAuNDJMbFlCSmlqQkVTNFdBWEVnak92amh6el9Ncm52UDJ2ZG9odFh1N0xWQ1VVMGhnOWdmLWZaTXZNam4xN0hxdi1QWEdzUzFBVVE0aEFXWUdDRGdBcFFFIiwieG1zX3RjZHQiOjE0NDkyMjc3Njh9.d929QP1wUsiFihUO_Bh9Pv_6b7EaxjNMtQwwefF9CkcjzQfYb6I0LWVOXO0aioRDmpMaFY0Ay2Lu3VcZYaAwlp_kBoTDLl6GyUEYyZwT-rkFy_7k2YddpgxJuX9hbxN0g1nM4EK6UvLve-2U-cVMAupNxz7WkaOhO3vbUuHknAmriXKS_L7PefGBwxQVbXcq6GF1bwGmT3UyA0pyU-nWUp7a4f-C4dadakUKw29-c5NwrV9mHjDkVsF5lxeSDbQ6EmsoFzz_aFV6gZ_T-MY5cVo-ihkpZT3hw2EBYTcQsj70oWmNqJhEDRSG3DDbB8nfihTAYFzIVV6piMEY4iRorA";
+        const token = "eyJ0eXAiOiJKV1QiLCJub25jZSI6ImI2ZHpWMVNWNFFJWkpPN0REcHdoN05IUFZ2b0pvTWZtNnJtOXNaUmhhOGsiLCJhbGciOiJSUzI1NiIsIng1dCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSIsImtpZCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8yNjM3MWI1ZS05NDhlLTQ3OTEtYTA1NS0wMDNjOTAzMDZiOGMvIiwiaWF0IjoxNzU3Njg0MzU3LCJuYmYiOjE3NTc2ODQzNTcsImV4cCI6MTc1NzY4ODI1NywiYWlvIjoiazJSZ1lGZzA2eTduMjdaTFVvRzNJeHJlM0t4UkFnQT0iLCJhcHBfZGlzcGxheW5hbWUiOiJPdXRsb29rIE9PRiIsImFwcGlkIjoiYzJhOGI2NTAtNTBiMi00NDZlLWE4ZTktYmZmYTY2OThiNzdmIiwiYXBwaWRhY3IiOiIxIiwiaWRwIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvMjYzNzFiNWUtOTQ4ZS00NzkxLWEwNTUtMDAzYzkwMzA2YjhjLyIsImlkdHlwIjoiYXBwIiwib2lkIjoiMGNjNDdmYzUtYWQ1Mi00MTFlLTliN2QtYmU3ZThjYmQ3NjcxIiwicmgiOiIxLkFWd0FYaHMzSm82VWtVZWdWUUE4a0RCcmpBTUFBQUFBQUFBQXdBQUFBQUFBQUFCY0FBQmNBQS4iLCJyb2xlcyI6WyJQZW9wbGUuUmVhZC5BbGwiLCJVc2VyLlJlYWQuQWxsIl0sInN1YiI6IjBjYzQ3ZmM1LWFkNTItNDExZS05YjdkLWJlN2U4Y2JkNzY3MSIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJFVSIsInRpZCI6IjI2MzcxYjVlLTk0OGUtNDc5MS1hMDU1LTAwM2M5MDMwNmI4YyIsInV0aSI6Ik9hSVlDdXlVMWtpWVFNQjVGS0VJQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbIjA5OTdhMWQwLTBkMWQtNGFjYi1iNDA4LWQ1Y2E3MzEyMWU5MCJdLCJ4bXNfZnRkIjoicmREalJEbG1sR1RwRkxqd0thVGtpLW1GS0dwZG9TN3hCeWhwN2oxYnN1c0JaWFZ5YjNCbGQyVnpkQzFrYzIxeiIsInhtc19pZHJlbCI6IjI0IDciLCJ4bXNfcmQiOiIwLjQyTGxZQkppakJFUzRXQVhFZ2pPdmpoenpfTXJudlAydmRvaHRYdTdMVkNVVTBoZzlnZi1mWk12TWpuMTdIcXYtUFhHc1MxQVVRNGhBV1lHQ0RnQXBRRSIsInhtc190Y2R0IjoxNDQ5MjI3NzY4fQ.RUwb1Uk8qzeEf6RZo0Sy6MzSZnUNDKKKRi8vcL_u94Xmqsu0ow3fyxgxejIZF6jhufOJTdHa_GMdVpfXSsqncwT5eBG9vY-tC6Y2Sgs6jDsLEj7_7DnN3GJStlLAGYZebBk_B-DFTRm0RwmFrDiP8U_mtzXXDDdKFxyswo0UanW8MgVOTeN5SIzCTqoME7bjkAtkLSyjs33g2CScl-Zye8KXB9X_4WbfEcQ5WNkDg2Db0ruYyrMW5_wGA6-TtUpf0WBu-fc-ZwS4eBY1NagcZlR3T9MnGJyVMY6fyDacIAP9s5CHxnojBDJwFlYZ-KKKtNE_wMnkR3cD9buf5Gv9lw";
         return token;
     } catch (error) {
         console.error('Error getting access token:', error);
@@ -500,7 +500,7 @@ async function searchUsers(query) {
         const token = await getAccessToken();
         
         const encodedQuery = encodeURIComponent(query);
-        const response = await fetch(`https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'${encodedQuery}') or startswith(givenName,'${encodedQuery}') or startswith(surname,'${encodedQuery}')&$select=id,displayName,mail,userPrincipalName,jobTitle,department,businessPhones&$top=10`, {
+        const response = await fetch(`https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'${encodedQuery}') or startswith(givenName,'${encodedQuery}') or startswith(surname,'${encodedQuery}')&$select=id,displayName,mail,userPrincipalName,jobTitle,businessPhones&$top=10`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -516,8 +516,8 @@ async function searchUsers(query) {
                 id: user.id,
                 name: user.displayName,
                 email: user.mail || user.userPrincipalName,
-                department: user.department || 'Bilinmiyor',
-                phone: user.businessPhones && user.businessPhones.length > 0 ? user.businessPhones[0] : '+90 212 555 0100'
+                jobTitle: user.jobTitle,
+                phone: user.mobilePhone
             }));
         } else {
             console.error('User search failed:', response.status, response.statusText);
@@ -546,7 +546,7 @@ function displayUserResults(users, dropdown, input) {
         item.className = 'colleague-item';
         item.innerHTML = `
             <div><strong>${user.name}</strong></div>
-            <div style="font-size: 12px; color: #605e5c;">${user.department} - ${user.email}</div>
+            <div style="font-size: 12px; color: #605e5c;">${user.jobTitle} - ${user.email}</div>
         `;
         
         item.addEventListener('click', () => {
@@ -630,9 +630,9 @@ function updatePreview() {
     
     // Get current user info (in production, this would come from Office.js)
     const currentUser = {
-        name: "Kullanıcı Adı", // This would be retrieved from Office context
-        position: "Pozisyon",
-        company: "Öztiryakiler"
+        name: Office.context.mailbox.userProfile.displayName, // This would be retrieved from Office context
+        position: Office.context.mailbox.userProfile.jobTitle,
+        company: Office.context.mailbox.userProfile.companyName
     };
     
     let messageBody = messageTemplate.body
