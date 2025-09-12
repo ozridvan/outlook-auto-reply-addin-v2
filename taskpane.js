@@ -368,7 +368,7 @@ const messageTemplate = {
 
 E-postanız için teşekkür ederim. {startDate} – {endDate} tarihleri arasında yıllık izinde olacağım ve bu süre içinde e-postalarınıza yanıt veremeyeceğim.
 
-Acil konularınız için {colleagueName} ile {email} veya {phone} üzerinden iletişime geçebilirsiniz.
+Acil konularınız için {colleagueName} ile {email} {phone} üzerinden iletişime geçebilirsiniz.
 
 Anlayışınız için teşekkür eder, iyi çalışmalar dilerim.
 
@@ -383,7 +383,7 @@ Dear Sir/Madam,
 
 Thank you for your email. I will be out of the office on annual leave from {startDate} to {endDate}, and will not be able to respond to your message during this period.
 
-For urgent matters, please contact {colleagueName} at {email} or {phone}.
+For urgent matters, please contact {colleagueName} at {email} {phoneEn}.
 
 Thank you for your understanding.
 
@@ -653,7 +653,8 @@ async function updatePreview() {
         .replaceAll('{endDate}', endDateTime)
         .replaceAll('{colleagueName}', selectedColleague.name)
         .replaceAll('{email}', selectedColleague.email)
-        .replaceAll('{phone}', selectedColleague.phone)
+        .replaceAll('{phone}', " veya " + selectedColleague.phone || '')
+        .replaceAll('{phoneEn}', " or " + selectedColleague.phone || '')
         .replaceAll('{userName}', currentUser.displayName || currentUser.name)
         .replaceAll('{position}', currentUser.jobTitle || currentUser.position)
         .replaceAll('{company}', currentUser.companyName || currentUser.company);
