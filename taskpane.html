@@ -232,6 +232,21 @@
             background-color: #e1dfdd;
         }
         
+        .preview-section .copy-button {
+            margin-top: 8px;
+            margin-left: 0;
+            background-color: #0078d4;
+            color: white;
+            border: 1px solid #0078d4;
+            padding: 6px 12px;
+            font-size: 13px;
+            width: auto;
+        }
+        
+        .preview-section .copy-button:hover {
+            background-color: #106ebe;
+        }
+        
         .oof-status-banner {
             background-color: #fff4e6;
             border: 1px solid #ffb366;
@@ -346,6 +361,9 @@
             <div id="messagePreview" class="preview-content">
                 Lütfen tüm alanları doldurun...
             </div>
+            <button id="copyPreviewButton" class="copy-button" onclick="copyPreviewMessage()">
+                📋 Kopyala
+            </button>
         </div>
         
         <!-- Version Information -->

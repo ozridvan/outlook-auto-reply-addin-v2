@@ -1,4 +1,4 @@
-let version = "1.0.7";
+let version = "1.0.8";
 
 // Authentication configuration
 const AUTH_CONFIG = {
@@ -1195,6 +1195,29 @@ function copyMessage() {
     setTimeout(() => {
         copyButton.textContent = originalText;
     }, 2000);
+}
+
+// Copy preview message to clipboard with 30-second feedback
+function copyPreviewMessage() {
+    const messagePreview = document.getElementById('messagePreview');
+    const copyButton = document.getElementById('copyPreviewButton');
+    
+    // Create a temporary textarea to copy the text
+    const textArea = document.createElement('textarea');
+    textArea.value = messagePreview.textContent;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    // Show feedback with checkmark
+    const originalText = copyButton.innerHTML;
+    copyButton.innerHTML = '✅ Kopyalandı!';
+    
+    // Revert back to original text after 30 seconds
+    setTimeout(() => {
+        copyButton.innerHTML = originalText;
+    }, 30000);
 }
 
 // Close instructions modal
