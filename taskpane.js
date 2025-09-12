@@ -368,13 +368,13 @@ const messageTemplate = {
 
 E-postanız için teşekkür ederim. {startDate} – {endDate} tarihleri arasında yıllık izinde olacağım ve bu süre içinde e-postalarınıza yanıt veremeyeceğim.
 
-Acil konularınız için {colleagueName} ile {email} {phone} üzerinden iletişime geçebilirsiniz.
+{contactLine}
 
 Anlayışınız için teşekkür eder, iyi çalışmalar dilerim.
 
 Saygılarımla,
 {userName}
-{position}
+{positionLine}
 {company}
 
 ---
@@ -383,13 +383,13 @@ Dear Sir/Madam,
 
 Thank you for your email. I will be out of the office on annual leave from {startDate} to {endDate}, and will not be able to respond to your message during this period.
 
-For urgent matters, please contact {colleagueName} at {email} {phoneEn}.
+{contactLineEn}
 
 Thank you for your understanding.
 
 Kind regards,
 {userName}
-{position}
+{positionLine}
 {company}`
 };
 
@@ -484,7 +484,7 @@ async function setupColleagueSearch() {
 
 async function getAccessToken() {
     try {
-        const token = "eyJ0eXAiOiJKV1QiLCJub25jZSI6ImI2ZHpWMVNWNFFJWkpPN0REcHdoN05IUFZ2b0pvTWZtNnJtOXNaUmhhOGsiLCJhbGciOiJSUzI1NiIsIng1dCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSIsImtpZCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8yNjM3MWI1ZS05NDhlLTQ3OTEtYTA1NS0wMDNjOTAzMDZiOGMvIiwiaWF0IjoxNzU3Njg0MzU3LCJuYmYiOjE3NTc2ODQzNTcsImV4cCI6MTc1NzY4ODI1NywiYWlvIjoiazJSZ1lGZzA2eTduMjdaTFVvRzNJeHJlM0t4UkFnQT0iLCJhcHBfZGlzcGxheW5hbWUiOiJPdXRsb29rIE9PRiIsImFwcGlkIjoiYzJhOGI2NTAtNTBiMi00NDZlLWE4ZTktYmZmYTY2OThiNzdmIiwiYXBwaWRhY3IiOiIxIiwiaWRwIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvMjYzNzFiNWUtOTQ4ZS00NzkxLWEwNTUtMDAzYzkwMzA2YjhjLyIsImlkdHlwIjoiYXBwIiwib2lkIjoiMGNjNDdmYzUtYWQ1Mi00MTFlLTliN2QtYmU3ZThjYmQ3NjcxIiwicmgiOiIxLkFWd0FYaHMzSm82VWtVZWdWUUE4a0RCcmpBTUFBQUFBQUFBQXdBQUFBQUFBQUFCY0FBQmNBQS4iLCJyb2xlcyI6WyJQZW9wbGUuUmVhZC5BbGwiLCJVc2VyLlJlYWQuQWxsIl0sInN1YiI6IjBjYzQ3ZmM1LWFkNTItNDExZS05YjdkLWJlN2U4Y2JkNzY3MSIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJFVSIsInRpZCI6IjI2MzcxYjVlLTk0OGUtNDc5MS1hMDU1LTAwM2M5MDMwNmI4YyIsInV0aSI6Ik9hSVlDdXlVMWtpWVFNQjVGS0VJQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbIjA5OTdhMWQwLTBkMWQtNGFjYi1iNDA4LWQ1Y2E3MzEyMWU5MCJdLCJ4bXNfZnRkIjoicmREalJEbG1sR1RwRkxqd0thVGtpLW1GS0dwZG9TN3hCeWhwN2oxYnN1c0JaWFZ5YjNCbGQyVnpkQzFrYzIxeiIsInhtc19pZHJlbCI6IjI0IDciLCJ4bXNfcmQiOiIwLjQyTGxZQkppakJFUzRXQVhFZ2pPdmpoenpfTXJudlAydmRvaHRYdTdMVkNVVTBoZzlnZi1mWk12TWpuMTdIcXYtUFhHc1MxQVVRNGhBV1lHQ0RnQXBRRSIsInhtc190Y2R0IjoxNDQ5MjI3NzY4fQ.RUwb1Uk8qzeEf6RZo0Sy6MzSZnUNDKKKRi8vcL_u94Xmqsu0ow3fyxgxejIZF6jhufOJTdHa_GMdVpfXSsqncwT5eBG9vY-tC6Y2Sgs6jDsLEj7_7DnN3GJStlLAGYZebBk_B-DFTRm0RwmFrDiP8U_mtzXXDDdKFxyswo0UanW8MgVOTeN5SIzCTqoME7bjkAtkLSyjs33g2CScl-Zye8KXB9X_4WbfEcQ5WNkDg2Db0ruYyrMW5_wGA6-TtUpf0WBu-fc-ZwS4eBY1NagcZlR3T9MnGJyVMY6fyDacIAP9s5CHxnojBDJwFlYZ-KKKtNE_wMnkR3cD9buf5Gv9lw";
+        const token = "eyJ0eXAiOiJKV1QiLCJub25jZSI6InVaSl9xQTc1TW00cUJYNWFJY211eDlPMG52dkNZRVR5WGpPS0xvMm9OU0EiLCJhbGciOiJSUzI1NiIsIng1dCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSIsImtpZCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8yNjM3MWI1ZS05NDhlLTQ3OTEtYTA1NS0wMDNjOTAzMDZiOGMvIiwiaWF0IjoxNzU3Njg2ODk5LCJuYmYiOjE3NTc2ODY4OTksImV4cCI6MTc1NzY5MDc5OSwiYWlvIjoiazJSZ1lIaDFScXc1c1l2bDFJYzU2ck0yWFp3OUJRQT0iLCJhcHBfZGlzcGxheW5hbWUiOiJPdXRsb29rIE9PRiIsImFwcGlkIjoiYzJhOGI2NTAtNTBiMi00NDZlLWE4ZTktYmZmYTY2OThiNzdmIiwiYXBwaWRhY3IiOiIxIiwiaWRwIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvMjYzNzFiNWUtOTQ4ZS00NzkxLWEwNTUtMDAzYzkwMzA2YjhjLyIsImlkdHlwIjoiYXBwIiwib2lkIjoiMGNjNDdmYzUtYWQ1Mi00MTFlLTliN2QtYmU3ZThjYmQ3NjcxIiwicmgiOiIxLkFWd0FYaHMzSm82VWtVZWdWUUE4a0RCcmpBTUFBQUFBQUFBQXdBQUFBQUFBQUFCY0FBQmNBQS4iLCJyb2xlcyI6WyJQZW9wbGUuUmVhZC5BbGwiLCJVc2VyLlJlYWQuQWxsIl0sInN1YiI6IjBjYzQ3ZmM1LWFkNTItNDExZS05YjdkLWJlN2U4Y2JkNzY3MSIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJFVSIsInRpZCI6IjI2MzcxYjVlLTk0OGUtNDc5MS1hMDU1LTAwM2M5MDMwNmI4YyIsInV0aSI6IjRpc0tqRnZqeTAyMHRkcVpsR1hsQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbIjA5OTdhMWQwLTBkMWQtNGFjYi1iNDA4LWQ1Y2E3MzEyMWU5MCJdLCJ4bXNfZnRkIjoiSWd6SXNDdkJ1bklscjBfeDRvVS1OcDJyMVNmejdjdGxUWTlwMDNUcEpQUUJaWFZ5YjNCbGQyVnpkQzFrYzIxeiIsInhtc19pZHJlbCI6IjIgNyIsInhtc19yZCI6IjAuNDJMbFlCSmlqQkVTNFdBWEVnak92amh6el9Ncm52UDJ2ZG9odFh1N0xWQ1VVMGhnOWdmLWZaTXZNam4xN0hxdi1QWEdzUzFBVVE0aEFXWUdDRGdBcFFFIiwieG1zX3RjZHQiOjE0NDkyMjc3Njh9.ZxVkRPanKOs5k-NHGl_XwvhGKT1dbEUtWWAqZoHGrOQEQduFQk7FErD7veDS4A5raa5ZOFLXOvv_oj0Q95oSZMZMwlE0kNFE-Qcjl1WIW82Qs-LN6KtJux7V6tN64D05tP2dw9FNUQ0pac7cwc9cbj5LyhYFx2Lye7t2NX_3gCdFlc4b9nc5ExkfP-7uMMfwybrU6XhfMe1Nn97HKH6upXlUg9yLo0c5SJals1sbC8gnURzOn0SN_6jJmBEail-NPi00MBSjHHsUNrY403Yusl_Cxd0P_VdfLtQ6xfaIBq2n42ZR4zkKFs9DK7QB2pFkqbrHG_DV6cTTW7iSr5bo3A";
         return token;
     } catch (error) {
         console.error('Error getting access token:', error);
@@ -648,16 +648,51 @@ async function updatePreview() {
         };
     }
     
+    // Generate contact lines dynamically
+    let contactLine = '';
+    let contactLineEn = '';
+    
+    if (selectedColleague.name || selectedColleague.email || selectedColleague.phone) {
+        contactLine = 'Acil konularınız için';
+        contactLineEn = 'For urgent matters, please contact';
+        
+        if (selectedColleague.name) {
+            contactLine += ` ${selectedColleague.name} ile`;
+            contactLineEn += ` ${selectedColleague.name}`;
+        }
+        
+        if (selectedColleague.email) {
+            contactLine += ` ${selectedColleague.email}`;
+            contactLineEn += ` at ${selectedColleague.email}`;
+        }
+        
+        if (selectedColleague.phone) {
+            contactLine += ` veya ${selectedColleague.phone}`;
+            contactLineEn += ` or ${selectedColleague.phone}`;
+        }
+        
+        contactLine += ' üzerinden iletişime geçebilirsiniz.';
+        contactLineEn += '.';
+    } else {
+        contactLine = 'Acil konularınız için lütfen başka bir yetkiliye başvurun.';
+        contactLineEn = 'For urgent matters, please contact another authorized person.';
+    }
+    
+    // Generate position line dynamically
+    let positionLine = '';
+    const position = currentUser.jobTitle || currentUser.position || '';
+    if (position) {
+        positionLine = position;
+    }
+    
     let messageBody = messageTemplate.body
         .replaceAll('{startDate}', startDateTime)
         .replaceAll('{endDate}', endDateTime)
-        .replaceAll('{colleagueName}', selectedColleague.name)
-        .replaceAll('{email}', selectedColleague.email)
-        .replaceAll('{phone}', " veya " + selectedColleague.phone || '')
-        .replaceAll('{phoneEn}', " or " + selectedColleague.phone || '')
-        .replaceAll('{userName}', currentUser.displayName || currentUser.name)
-        .replaceAll('{position}', currentUser.jobTitle || currentUser.position)
-        .replaceAll('{company}', currentUser.companyName || currentUser.company);
+        .replaceAll('{contactLine}', contactLine)
+        .replaceAll('{contactLineEn}', contactLineEn)
+        .replaceAll('{userName}', currentUser.displayName || currentUser.name || '')
+        .replaceAll('{positionLine}', positionLine)
+        .replaceAll('{company}', currentUser.companyName || currentUser.company || '');
     
     previewDiv.textContent = `Konu: ${messageTemplate.subject}
 
