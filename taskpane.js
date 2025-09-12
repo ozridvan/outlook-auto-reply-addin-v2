@@ -393,66 +393,6 @@ Kind regards,
 {company}`
 };
 
-// Mock D365 data - In production, this would come from D365 API
-const mockColleagues = [
-    {
-        id: 1,
-        name: "Ahmet Yılmaz",
-        email: "ahmet.yilmaz@ozturyakiler.com.tr",
-        phone: "+90 212 555 0101",
-        department: "İnsan Kaynakları"
-    },
-    {
-        id: 2,
-        name: "Fatma Demir",
-        email: "fatma.demir@ozturyakiler.com.tr",
-        phone: "+90 212 555 0102",
-        department: "Muhasebe"
-    },
-    {
-        id: 3,
-        name: "Mehmet Kaya",
-        email: "mehmet.kaya@ozturyakiler.com.tr",
-        phone: "+90 212 555 0103",
-        department: "Satış"
-    },
-    {
-        id: 4,
-        name: "Ayşe Özkan",
-        email: "ayse.ozkan@ozturyakiler.com.tr",
-        phone: "+90 212 555 0104",
-        department: "Pazarlama"
-    },
-    {
-        id: 5,
-        name: "Can Şahin",
-        email: "can.sahin@ozturyakiler.com.tr",
-        phone: "+90 212 555 0105",
-        department: "IT"
-    },
-    {
-        id: 6,
-        name: "Zeynep Arslan",
-        email: "zeynep.arslan@ozturyakiler.com.tr",
-        phone: "+90 212 555 0106",
-        department: "Hukuk"
-    },
-    {
-        id: 7,
-        name: "Murat Çelik",
-        email: "murat.celik@ozturyakiler.com.tr",
-        phone: "+90 212 555 0107",
-        department: "Finans"
-    },
-    {
-        id: 8,
-        name: "Elif Koç",
-        email: "elif.koc@ozturyakiler.com.tr",
-        phone: "+90 212 555 0108",
-        department: "Operasyon"
-    }
-];
-
 // Check current OOF status using Graph API with new authentication
 async function checkCurrentOofStatus() {
     try {
@@ -542,12 +482,22 @@ async function setupColleagueSearch() {
     });
 }
 
+async function getAccessToken() {
+    try {
+        const token = "eyJ0eXAiOiJKV1QiLCJub25jZSI6Im9relpvRlV4M0xyS0JCRzZ4QzVHTkkzTUkzUFlnSWZaRUYwZWtIVF9WRVEiLCJhbGciOiJSUzI1NiIsIng1dCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSIsImtpZCI6IkpZaEFjVFBNWl9MWDZEQmxPV1E3SG4wTmVYRSJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC8yNjM3MWI1ZS05NDhlLTQ3OTEtYTA1NS0wMDNjOTAzMDZiOGMvIiwiaWF0IjoxNzU3NjgxMDMyLCJuYmYiOjE3NTc2ODEwMzIsImV4cCI6MTc1NzY4NDkzMiwiYWlvIjoiazJSZ1lQajcyV1BibjFQSG5sK0wrT2F6V2IxYkR3QT0iLCJhcHBfZGlzcGxheW5hbWUiOiJPdXRsb29rIE9PRiIsImFwcGlkIjoiYzJhOGI2NTAtNTBiMi00NDZlLWE4ZTktYmZmYTY2OThiNzdmIiwiYXBwaWRhY3IiOiIxIiwiaWRwIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvMjYzNzFiNWUtOTQ4ZS00NzkxLWEwNTUtMDAzYzkwMzA2YjhjLyIsImlkdHlwIjoiYXBwIiwib2lkIjoiMGNjNDdmYzUtYWQ1Mi00MTFlLTliN2QtYmU3ZThjYmQ3NjcxIiwicmgiOiIxLkFWd0FYaHMzSm82VWtVZWdWUUE4a0RCcmpBTUFBQUFBQUFBQXdBQUFBQUFBQUFCY0FBQmNBQS4iLCJyb2xlcyI6WyJQZW9wbGUuUmVhZC5BbGwiLCJVc2VyLlJlYWQuQWxsIl0sInN1YiI6IjBjYzQ3ZmM1LWFkNTItNDExZS05YjdkLWJlN2U4Y2JkNzY3MSIsInRlbmFudF9yZWdpb25fc2NvcGUiOiJFVSIsInRpZCI6IjI2MzcxYjVlLTk0OGUtNDc5MS1hMDU1LTAwM2M5MDMwNmI4YyIsInV0aSI6Ii1QQVp1TGtPV2tleHZYV1NVY2pXQUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbIjA5OTdhMWQwLTBkMWQtNGFjYi1iNDA4LWQ1Y2E3MzEyMWU5MCJdLCJ4bXNfZnRkIjoiQzdYSHI4bUJhVnhoUVJkSjg3VlFHelhyT1NLclpuRThnS3MtX1NwQWdmRUJaWFZ5YjNCbGJtOXlkR2d0WkhOdGN3IiwieG1zX2lkcmVsIjoiNyAyOCIsInhtc19yZCI6IjAuNDJMbFlCSmlqQkVTNFdBWEVnak92amh6el9Ncm52UDJ2ZG9odFh1N0xWQ1VVMGhnOWdmLWZaTXZNam4xN0hxdi1QWEdzUzFBVVE0aEFXWUdDRGdBcFFFIiwieG1zX3RjZHQiOjE0NDkyMjc3Njh9.NRHZA_zzr7ob80NNSnlhGfaw42flQ_HX6Wtz88KyzDGnWOUV6Q1UZmWQqkPd1xKGU3cldFmgC8hTcUCLLFS76iqluUUpNzH19L3QF0nIFdoI6uP9bv3FfbRge-LrgOO8BHKzHrDycW5QC4qlgrZGWRKPFxdD2mU_uNoifN9WqfoeX1g_5n7mCAELC1KmwbYaf5RSInJKPYjnNfh3Bc1r_0qB-MxLoZQHDdaIZ7p4anaGj_2e9qAVcZHcDsShvJUc8NxKTgz1qDdcqvse3nMXvXjrvSw-gkWOIDu5NbL6lZckMh2FY5Ly3XOhhxBej9wTRqrZu6hM95aYMfphpVyq2Q";
+        return token;
+    } catch (error) {
+        console.error('Error getting access token:', error);
+        return null;
+    }
+}
+
 // Search users via Graph API with new authentication
 async function searchUsers(query) {
     try {
         console.log('Searching users with query:', query);
         
-        const token = await authManager.getAccessToken();
+        const token = await getAccessToken();
         
         const encodedQuery = encodeURIComponent(query);
         const response = await fetch(`https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'${encodedQuery}') or startswith(givenName,'${encodedQuery}') or startswith(surname,'${encodedQuery}')&$select=id,displayName,mail,userPrincipalName,jobTitle,department,businessPhones&$top=10`, {
