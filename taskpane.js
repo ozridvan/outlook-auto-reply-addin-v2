@@ -1,4 +1,4 @@
-let version = "1.0.9";
+let version = "1.0.10";
 
 // Authentication configuration
 const AUTH_CONFIG = {
@@ -553,7 +553,9 @@ function displayUserResults(users, dropdown, input) {
             selectedColleague = user;
             input.value = user.name;
             dropdown.style.display = 'none';
-            updatePreview();
+            updatePreview().catch(error => {
+                console.error('Error updating preview:', error);
+            });
         });
         
         dropdown.appendChild(item);
@@ -565,7 +567,11 @@ function displayUserResults(users, dropdown, input) {
 function setupFormListeners() {
     const inputs = ['colleague', 'startDate', 'startTime', 'endDate', 'endTime'];
     inputs.forEach(id => {
-        document.getElementById(id).addEventListener('change', updatePreview);
+        document.getElementById(id).addEventListener('change', () => {
+            updatePreview().catch(error => {
+                console.error('Error updating preview:', error);
+            });
+        });
     });
 }
 
@@ -611,7 +617,7 @@ function formatDisplayDate(dateStr, timeStr) {
     }) + ' ' + timeStr;
 }
 
-function updatePreview() {
+async function updatePreview() {
     const colleagueInput = document.getElementById('colleague').value;
     const startDate = document.getElementById('startDate').value;
     const startTime = document.getElementById('startTime').value;
@@ -628,12 +634,19 @@ function updatePreview() {
     const startDateTime = formatDisplayDate(startDate, startTime);
     const endDateTime = formatDisplayDate(endDate, endTime);
     
-    // Get current user info (in production, this would come from Office.js)
-    const currentUser = {
-        name: Office.context.mailbox.userProfile.displayName, // This would be retrieved from Office context
-        position: Office.context.mailbox.userProfile.jobTitle,
-        company: Office.context.mailbox.userProfile.companyName
-    };
+    // Get current user info using the proper getUserProfile function
+    let currentUser;
+    try {
+        currentUser = await getUserProfile();
+    } catch (error) {
+        console.error('Error getting user profile:', error);
+        // Fallback to Office context if getUserProfile fails
+        currentUser = {
+            name: Office.context.mailbox.userProfile?.displayName || 'Kullanıcı Adı',
+            position: Office.context.mailbox.userProfile?.jobTitle || '',
+            company: Office.context.mailbox.userProfile?.companyName || 'Öztiryakiler'
+        };
+    }
     
     let messageBody = messageTemplate.body
         .replaceAll('{startDate}', startDateTime)
@@ -641,11 +654,13 @@ function updatePreview() {
         .replaceAll('{colleagueName}', selectedColleague.name)
         .replaceAll('{email}', selectedColleague.email)
         .replaceAll('{phone}', selectedColleague.phone)
-        .replaceAll('{userName}', currentUser.name)
-        .replaceAll('{position}', currentUser.position)
-        .replaceAll('{company}', currentUser.company);
+        .replaceAll('{userName}', currentUser.displayName || currentUser.name)
+        .replaceAll('{position}', currentUser.jobTitle || currentUser.position)
+        .replaceAll('{company}', currentUser.companyName || currentUser.company);
     
-    previewDiv.textContent = `Konu: ${messageTemplate.subject}\n\n${messageBody}`;
+    previewDiv.textContent = `Konu: ${messageTemplate.subject}
+
+${messageBody}`;
 }
 
 async function setAutoReply(event) {
