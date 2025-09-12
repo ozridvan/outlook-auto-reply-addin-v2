@@ -127,18 +127,16 @@
     </Resources>
 
     <!-- İç: V1_1 sadece SSO -->
-    <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
-      <WebApplicationInfo>
-        <Id>c2a8b650-50b2-446e-a8e9-bffa6698b77f</Id>
-        <Resource>api://c2a8b650-50b2-446e-a8e9-bffa6698b77f</Resource>
-        <Scopes>
-          <Scope>openid</Scope>
-          <Scope>profile</Scope>
-          <Scope>https://graph.microsoft.com/User.Read</Scope>
-          <Scope>https://graph.microsoft.com/MailboxSettings.ReadWrite</Scope>
-          <Scope>https://graph.microsoft.com/People.Read</Scope>
-        </Scopes>
-      </WebApplicationInfo>
+        <!-- İç: V1_1 (SSO)  -->
+    <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1"
+                      xsi:type="VersionOverridesV1_1">
+
+      <!-- Bazı tenant/validator'lar v1.1 içinde de Hosts bekliyor -->
+      <Hosts>
+        <Host xsi:type="MailHost"/>
+      </Hosts>
+
+      
     </VersionOverrides>
 
   </VersionOverrides>
