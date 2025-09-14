@@ -146,6 +146,42 @@ Kind regards,
     let lastUserResults = [];       // enter ile hızlı seçim için
     let tokenCache = {};            // scope->token
 
+ /* =======================
+       PEOPLE ARAMA
+    ======================= */
+    const PEOPLE_SCOPES = ["People.Read", "openid", "profile"];
+
+    async function searchPeople(q, top = 25) {
+      const token = await getGraphToken(PEOPLE_SCOPES); // senin MSAL/NAA token fonksiyonun
+      const url = "https://graph.microsoft.com/v1.0/me/people"
+                + `?$search="${q}"`
+                + "&$select=displayName,scoredEmailAddresses,mail,userPrincipalName,jobTitle,companyName,phones"
+                + `&$top=${top}`;
+
+      const res = await fetch(url, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "ConsistencyLevel": "eventual"   // $search için şart
+        }
+      });
+      if (!res.ok) throw new Error(`People API ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+
+      return (data.value || []).map(p => ({
+        id: p.id,
+        name: p.displayName,
+        email: p.mail || p.userPrincipalName || (p.scoredEmailAddresses?.[0]?.address ?? ""),
+        jobTitle: p.jobTitle || "",
+        company: p.companyName || "",
+        phone: (p.phones && p.phones[0]?.number) || ""
+      }));
+    }
+
+ /* =======================
+       PEOPLE ARAMA SON
+    ======================= */
+
     /* =======================
        YARDIMCI FONK.
     ======================= */
@@ -280,7 +316,7 @@ Kind regards,
       const handler = debounce(async ()=>{
         const q = input.value.trim();
         try{
-          if (!q) renderUsers(await listUsersInitial());
+          if (!q) renderUsers(await searchPeople());
           else    renderUsers(await searchUsersPrefix(q,25));
         }catch(e){ console.error("[users] hata:", e.message||e); }
       }, 300);
