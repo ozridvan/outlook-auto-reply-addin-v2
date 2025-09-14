@@ -424,21 +424,21 @@
             const r = await pca.ssoSilent({ loginHint: email, scopes });
             return r.accessToken;
             } catch (e1) {
-            console.warn("ssoSilent başarısız:", e1?.errorCode || e1?.message);
+                console.warn("ssoSilent başarısız:", e1?.errorCode || e1?.message);
 
-            // 2) Cache'de hesap varsa acquireTokenSilent
-            try {
-                const accounts = await pca.getTokenCache().getAllAccounts();
-                if (accounts.length) {
-                const r2 = await pca.acquireTokenSilent({ account: accounts[0], scopes });
-                return r2.accessToken;
+                // 2) Cache'de hesap varsa acquireTokenSilent
+                try {
+                    const accounts = await pca.getTokenCache().getAllAccounts();
+                    if (accounts.length) {
+                    const r2 = await pca.acquireTokenSilent({ account: accounts[0], scopes });
+                    return r2.accessToken;
+                    }
+                } catch (e2) {
+                    console.warn("acquireTokenSilent başarısız:", e2?.errorCode || e2?.message);
                 }
-            } catch (e2) {
-                console.warn("acquireTokenSilent başarısız:", e2?.errorCode || e2?.message);
-            }
 
-            // 3) **Popup/redirect kullanma** — add-in içinde bloklanır (7q6ck).
-            throw new Error("Sessiz token alınamadı; admin consent/redirect ayarlarını kontrol et.");
+                // 3) **Popup/redirect kullanma** — add-in içinde bloklanır (7q6ck).
+                throw new Error("Sessiz token alınamadı; admin consent/redirect ayarlarını kontrol et.");
             }
         }
 
@@ -446,7 +446,7 @@
             try {
             const scopes = ["MailboxSettings.ReadWrite", "openid", "profile"];
             const token = await getGraphToken(scopes);
-
+console.log("Token:", token);
             const body = {
                 automaticRepliesSetting: {
                 status: "scheduled",
