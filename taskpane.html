@@ -351,7 +351,7 @@
             
             <div id="statusMessage" class="status-message" style="display: none;"></div>
             
-            <button type="submit" id="btnSetAutoReply" class="btn">
+            <button type="submit" id="set-oof-btn" class="btn">
                 Otomatik Yanıtı Ayarla
             </button>
         </form>
@@ -368,7 +368,7 @@
         
         <!-- Version Information -->
         <div style="text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e1dfdd; font-size: 12px; color: #605e5c;">
-            <span id="versionInfo">Sürüm: {{version}} | Son Güncelleme: <span id="lastUpdate"></span></span>
+            <span id="versionInfo">Sürüm: 1.0.0 | Son Güncelleme: <span id="lastUpdate"></span></span>
         </div>
         
         <div id="instructionsModal" class="modal" style="display: none;">
@@ -379,13 +379,81 @@
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.27.0/lib/msal-browser.min.js"></script>
 
     <script>
         // Cache-busting for JS file
-        const timestamp = new Date().getTime();
-        const script = document.createElement('script');
-        script.src = 'taskpane.js?v=' + timestamp;
-        document.head.appendChild(script);
+        // const timestamp = new Date().getTime();
+        // const script = document.createElement('script');
+        // script.src = 'taskpane.js?v=' + timestamp;
+        // document.head.appendChild(script);
+
+
+        let pca;
+
+        Office.onReady(async () => {
+        // NAA destekli mi?
+        if (!Office.context.requirements.isSetSupported("NestedAppAuth", "1.1")) {
+            console.error("NestedAppAuth 1.1 desteklenmiyor.");
+            return;
+        }
+
+        // MSAL’i NAA ile başlat (clientId: Entra’daki App (client) ID)
+        pca = await msal.createNestablePublicClientApplication({
+            auth: {
+            clientId: "c2a8b650-50b2-446e-a8e9-bffa6698b77f",                 // ← Entra’dan
+            authority: "https://login.microsoftonline.com/common"
+            }
+        });
+
+        // Tek tıkla OOF ayarla
+        document.getElementById("set-oof-btn").onclick = setOOFWithGraph;
+        });
+
+        async function setOOFWithGraph() {
+        const scopes = ["MailboxSettings.ReadWrite", "openid", "profile"];
+        let token = null;
+
+        // 1) Sessiz token (kullanıcı Outlook’ta zaten oturumlu → genelde yeter)
+        try {
+            const resp = await pca.acquireTokenSilent({ scopes });
+            token = resp.accessToken;
+        } catch (silentErr) { /* sessiz alamadıysa aşağıya düş */ }
+
+        // 2) Teorik geri dönüş (admin consent yoksa tek seferlik popup gerekir)
+        if (!token) {
+            try {
+            const resp2 = await pca.acquireTokenPopup({ scopes });
+            token = resp2.accessToken;
+            } catch (popupErr) {
+            console.error("Token alınamadı:", popupErr);
+            return;
+            }
+        }
+
+        // 3) Graph: /me/mailboxSettings PATCH
+        const body = {
+            automaticRepliesSetting: {
+            status: "scheduled",
+            scheduledStartDateTime: { dateTime: "2025-09-15T09:00:00.0000000", timeZone: "Turkey Standard Time" },
+            scheduledEndDateTime:   { dateTime: "2025-09-22T18:00:00.0000000", timeZone: "Turkey Standard Time" },
+            internalReplyMessage: "<p>Ofis dışındayım</p>",
+            externalReplyMessage: "<p>Ofis dışındayım</p>"
+            }
+        };
+
+        const res = await fetch("https://graph.microsoft.com/v1.0/me/mailboxSettings", {
+            method: "PATCH",
+            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+            console.log("OOF ayarlandı (204).");
+        } else {
+            console.error("Graph hata:", await res.text());
+        }
+        }
     </script>
 </body>
 </html>
