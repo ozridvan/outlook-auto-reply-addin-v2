@@ -388,7 +388,7 @@
         // script.src = 'taskpane.js?v=' + timestamp;
         // document.head.appendChild(script);
 
-
+        var accessToken;
         let pca;
 
         Office.onReady(async () => {
@@ -427,6 +427,7 @@
             try {
                 console.log("SSO öncesi");
                 const r = await pca.acquireTokenSilent({ scopes });
+                accessToken = r.accessToken;
                 console.log("SSO sonrası", r.accessToken);
                 return r.accessToken;
             } catch (e) {
@@ -444,7 +445,7 @@
             try {
             const scopes = ["MailboxSettings.ReadWrite", "openid", "profile"];
             const token = await getGraphToken(scopes);
-console.log("Token:", token);
+console.log("Token:", accessToken);
             const body = {
                 automaticRepliesSetting: {
                 status: "scheduled",
@@ -455,12 +456,13 @@ console.log("Token:", token);
                 }
             };
 
+console.log("Request:", body);
             const res = await fetch("https://graph.microsoft.com/v1.0/me/mailboxSettings", {
                 method: "PATCH",
                 headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify(body)
             });
-
+console.log("Response:", res);
             if (res.ok) console.log("OOF ayarlandı (204)");
             else console.error("Graph hata:", await res.text());
             } catch (err) {
