@@ -397,62 +397,75 @@
             console.error("NestedAppAuth 1.1 desteklenmiyor.");
             return;
         }
+        const authority = "https://login.microsoftonline.com/26371b5e-948e-4791-a055-003c90306b8c"; // çok-kiracı istersen 'organizations' da olur
 
         // MSAL’i NAA ile başlat (clientId: Entra’daki App (client) ID)
+        // pca = await msal.createNestablePublicClientApplication({
+        //     auth: {
+        //     clientId: "c2a8b650-50b2-446e-a8e9-bffa6698b77f",                 // ← Entra’dan
+        //     authority: "https://login.microsoftonline.com/common"
+        //     }
+        // });
         pca = await msal.createNestablePublicClientApplication({
-            auth: {
-            clientId: "c2a8b650-50b2-446e-a8e9-bffa6698b77f",                 // ← Entra’dan
-            authority: "https://login.microsoftonline.com/common"
-            }
+            auth: { clientId, authority }
         });
 
         // Tek tıkla OOF ayarla
         document.getElementById("set-oof-btn").onclick = setOOFWithGraph;
         });
 
-        async function setOOFWithGraph() {
-        const scopes = ["MailboxSettings.ReadWrite", "openid", "profile"];
-        let token = null;
+        async function getGraphToken(scopes) {
+            const email = Office.context.mailbox.userProfile.emailAddress;
 
-        // 1) Sessiz token (kullanıcı Outlook’ta zaten oturumlu → genelde yeter)
-        try {
-            const resp = await pca.acquireTokenSilent({ scopes });
-            token = resp.accessToken;
-        } catch (silentErr) { /* sessiz alamadıysa aşağıya düş */ }
-
-        // 2) Teorik geri dönüş (admin consent yoksa tek seferlik popup gerekir)
-        if (!token) {
+            // 1) SSO silent (loginHint ile) — broker’dan doğrudan
             try {
-            const resp2 = await pca.acquireTokenPopup({ scopes });
-            token = resp2.accessToken;
-            } catch (popupErr) {
-            console.error("Token alınamadı:", popupErr);
-            return;
+            const r = await pca.ssoSilent({ loginHint: email, scopes });
+            return r.accessToken;
+            } catch (e1) {
+            console.warn("ssoSilent başarısız:", e1?.errorCode || e1?.message);
+
+            // 2) Cache'de hesap varsa acquireTokenSilent
+            try {
+                const accounts = await pca.getTokenCache().getAllAccounts();
+                if (accounts.length) {
+                const r2 = await pca.acquireTokenSilent({ account: accounts[0], scopes });
+                return r2.accessToken;
+                }
+            } catch (e2) {
+                console.warn("acquireTokenSilent başarısız:", e2?.errorCode || e2?.message);
+            }
+
+            // 3) **Popup/redirect kullanma** — add-in içinde bloklanır (7q6ck).
+            throw new Error("Sessiz token alınamadı; admin consent/redirect ayarlarını kontrol et.");
             }
         }
 
-        // 3) Graph: /me/mailboxSettings PATCH
-        const body = {
-            automaticRepliesSetting: {
-            status: "scheduled",
-            scheduledStartDateTime: { dateTime: "2025-09-15T09:00:00.0000000", timeZone: "Turkey Standard Time" },
-            scheduledEndDateTime:   { dateTime: "2025-09-22T18:00:00.0000000", timeZone: "Turkey Standard Time" },
-            internalReplyMessage: "<p>Ofis dışındayım</p>",
-            externalReplyMessage: "<p>Ofis dışındayım</p>"
+        async function setOOFWithGraph() {
+            try {
+            const scopes = ["MailboxSettings.ReadWrite", "openid", "profile"];
+            const token = await getGraphToken(scopes);
+
+            const body = {
+                automaticRepliesSetting: {
+                status: "scheduled",
+                scheduledStartDateTime: { dateTime: "2025-09-15T09:00:00.0000000", timeZone: "Turkey Standard Time" },
+                scheduledEndDateTime:   { dateTime: "2025-09-22T18:00:00.0000000", timeZone: "Turkey Standard Time" },
+                internalReplyMessage: "<p>Ofis dışındayım</p>",
+                externalReplyMessage: "<p>Ofis dışındayım</p>"
+                }
+            };
+
+            const res = await fetch("https://graph.microsoft.com/v1.0/me/mailboxSettings", {
+                method: "PATCH",
+                headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) console.log("OOF ayarlandı (204)");
+            else console.error("Graph hata:", await res.text());
+            } catch (err) {
+            console.error("Token alınamadı:", err.message || err);
             }
-        };
-
-        const res = await fetch("https://graph.microsoft.com/v1.0/me/mailboxSettings", {
-            method: "PATCH",
-            headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify(body)
-        });
-
-        if (res.ok) {
-            console.log("OOF ayarlandı (204).");
-        } else {
-            console.error("Graph hata:", await res.text());
-        }
         }
     </script>
 </body>
