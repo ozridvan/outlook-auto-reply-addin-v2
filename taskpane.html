@@ -94,7 +94,7 @@
     /* ==== Sabitler ==== */
     const CLIENT_ID = "c2a8b650-50b2-446e-a8e9-bffa6698b77f";
     const TENANT_ID = "26371b5e-948e-4791-a055-003c90306b8c";
-    const USERS_SCOPES = ["User.ReadBasic.All","openid","profile"];
+    const USERS_SCOPES = ["User.Read.All","openid","profile"];
 
     // --- yardımcılar ---
     const debounce = (fn,ms=300)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);}};
@@ -113,7 +113,7 @@
         const r = await pcaInstance.acquireTokenSilent({ scopes });
         return r.accessToken;
       }catch(e){
-        throw new Error("Kullanıcı listesi için consent gerekli veya yetki yok (User.ReadBasic.All).");
+        throw new Error("Kullanıcı listesi için consent gerekli veya yetki yok (User.Read.All).");
       }
     }
 
