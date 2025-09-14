@@ -392,14 +392,20 @@
         let pca;
 
         Office.onReady(async () => {
-        // NAA destekli mi?
-        if (!Office.context.requirements.isSetSupported("NestedAppAuth", "1.1")) {
-            console.error("NestedAppAuth 1.1 desteklenmiyor.");
-            return;
-        }
-        const clientId = "c2a8b650-50b2-446e-a8e9-bffa6698b77f";
+            if (!Office.context.requirements.isSetSupported("NestedAppAuth", "1.1")) {
+                console.error("NestedAppAuth 1.1 desteklenmiyor (New Outlook ya da OWA kullan).");
+                return;
+            }
 
-        const authority = "https://login.microsoftonline.com/26371b5e-948e-4791-a055-003c90306b8c"; // çok-kiracı istersen 'organizations' da olur
+            pca = await msal.createNestablePublicClientApplication({
+            auth: {
+                clientId: "c2a8b650-50b2-446e-a8e9-bffa6698b77f",
+                authority: "https://login.microsoftonline.com/26371b5e-948e-4791-a055-003c90306b8c" // tek tenant için önerilir
+            }
+            });
+        // const clientId = "c2a8b650-50b2-446e-a8e9-bffa6698b77f";
+
+        // const authority = "https://login.microsoftonline.com/26371b5e-948e-4791-a055-003c90306b8c"; // çok-kiracı istersen 'organizations' da olur
 
         // MSAL’i NAA ile başlat (clientId: Entra’daki App (client) ID)
         // pca = await msal.createNestablePublicClientApplication({
@@ -408,39 +414,27 @@
         //     authority: "https://login.microsoftonline.com/common"
         //     }
         // });
-        pca = await msal.createNestablePublicClientApplication({
-            auth: { clientId, authority }
-        });
+        // pca = await msal.createNestablePublicClientApplication({
+        //     auth: { clientId, authority }
+        // });
 
         // Tek tıkla OOF ayarla
         document.getElementById("set-oof-btn").onclick = setOOFWithGraph;
         });
 
         async function getGraphToken(scopes) {
-            const email = Office.context.mailbox.userProfile.emailAddress;
-
-            // 1) SSO silent (loginHint ile) — broker’dan doğrudan
+            // 1) Sessiz
             try {
-            console.log("SSO öncesi");
-            const r = await pca.ssoSilent({ loginHint: email, scopes });
-            console.log("SSO silent başarılı:", r.accessToken);
+            const r = await pca.acquireTokenSilent({ scopes });
             return r.accessToken;
-            } catch (e1) {
-                console.warn("ssoSilent başarısız:", e1?.errorCode || e1?.message);
-
-                // 2) Cache'de hesap varsa acquireTokenSilent
-                try {
-                    const accounts = await pca.getTokenCache().getAllAccounts();
-                    if (accounts.length) {
-                    const r2 = await pca.acquireTokenSilent({ account: accounts[0], scopes });
-                    return r2.accessToken;
-                    }
-                } catch (e2) {
-                    console.warn("acquireTokenSilent başarısız:", e2?.errorCode || e2?.message);
-                }
-
-                // 3) **Popup/redirect kullanma** — add-in içinde bloklanır (7q6ck).
-                throw new Error("Sessiz token alınamadı; admin consent/redirect ayarlarını kontrol et.");
+            } catch (e) {
+            // 2) İlk kurulumda tek seferlik popup (NAA destekler)
+            try {
+                const r2 = await pca.acquireTokenPopup({ scopes });
+                return r2.accessToken;
+            } catch (e2) {
+                throw new Error(`Token alınamadı: ${e2.errorCode || e2.message}`);
+            }
             }
         }
 
