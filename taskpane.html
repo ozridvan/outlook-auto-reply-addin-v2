@@ -351,7 +351,7 @@
             
             <div id="statusMessage" class="status-message" style="display: none;"></div>
             
-            <button type="submit" id="set-oof-btn" class="btn">
+            <button type="submit" id="set-oof-btn" class="btn" onclick="setOOFWithGraph()">
                 Otomatik Yanıtı Ayarla
             </button>
         </form>
@@ -368,7 +368,7 @@
         
         <!-- Version Information -->
         <div style="text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e1dfdd; font-size: 12px; color: #605e5c;">
-            <span id="versionInfo">Sürüm: 1.0.4 | Son Güncelleme: <span id="lastUpdate"></span></span>
+            <span id="versionInfo">Sürüm: 1.0.5 | Son Güncelleme: <span id="lastUpdate"></span></span>
         </div>
         
         <div id="instructionsModal" class="modal" style="display: none;">
@@ -388,7 +388,6 @@
         // script.src = 'taskpane.js?v=' + timestamp;
         // document.head.appendChild(script);
 
-        var accessToken;
         let pca;
 
         Office.onReady(async () => {
@@ -403,32 +402,14 @@
                 authority: "https://login.microsoftonline.com/26371b5e-948e-4791-a055-003c90306b8c" // tek tenant için önerilir
             }
             });
-        // const clientId = "c2a8b650-50b2-446e-a8e9-bffa6698b77f";
-
-        // const authority = "https://login.microsoftonline.com/26371b5e-948e-4791-a055-003c90306b8c"; // çok-kiracı istersen 'organizations' da olur
-
-        // MSAL’i NAA ile başlat (clientId: Entra’daki App (client) ID)
-        // pca = await msal.createNestablePublicClientApplication({
-        //     auth: {
-        //     clientId: "c2a8b650-50b2-446e-a8e9-bffa6698b77f",                 // ← Entra’dan
-        //     authority: "https://login.microsoftonline.com/common"
-        //     }
-        // });
-        // pca = await msal.createNestablePublicClientApplication({
-        //     auth: { clientId, authority }
-        // });
-
-        // Tek tıkla OOF ayarla
-        document.getElementById("set-oof-btn").onclick = setOOFWithGraph;
-        });
 
         async function getGraphToken(scopes) {
             // 1) Sessiz
             try {
-                console.log("SSO öncesi");
+                // console.log("SSO öncesi");
                 const r = await pca.acquireTokenSilent({ scopes });
-                accessToken = r.accessToken;
-                console.log("SSO sonrası", r.accessToken);
+                // accessToken = r.accessToken;
+                // console.log("SSO sonrası", r.accessToken);
                 return r.accessToken;
             } catch (e) {
             // 2) İlk kurulumda tek seferlik popup (NAA destekler)
@@ -445,11 +426,10 @@
             try {
             const scopes = ["MailboxSettings.ReadWrite", "openid", "profile"];
             const token = await getGraphToken(scopes);
-console.log("Token:", accessToken);
             const body = {
                 automaticRepliesSetting: {
                 status: "scheduled",
-                scheduledStartDateTime: { dateTime: "2025-09-15T09:00:00.0000000", timeZone: "Turkey Standard Time" },
+                scheduledStartDateTime: { dateTime: "2025-09-14T09:00:00.0000000", timeZone: "Turkey Standard Time" },
                 scheduledEndDateTime:   { dateTime: "2025-09-22T18:00:00.0000000", timeZone: "Turkey Standard Time" },
                 internalReplyMessage: "<p>Ofis dışındayım</p>",
                 externalReplyMessage: "<p>Ofis dışındayım</p>"
