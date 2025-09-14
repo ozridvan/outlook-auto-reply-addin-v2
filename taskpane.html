@@ -421,7 +421,9 @@
 
             // 1) SSO silent (loginHint ile) — broker’dan doğrudan
             try {
+            console.log("SSO öncesi");
             const r = await pca.ssoSilent({ loginHint: email, scopes });
+            console.log("SSO silent başarılı:", r.accessToken);
             return r.accessToken;
             } catch (e1) {
                 console.warn("ssoSilent başarısız:", e1?.errorCode || e1?.message);
