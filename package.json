@@ -24,5 +24,8 @@
     "type": "git",
     "url": "https://github.com/ozridvan/outlook-auto-reply-addin-v2.git"
   },
-  "homepage": "https://ozridvan.github.io/outlook-auto-reply-addin-v2"
+  "homepage": "https://ozridvan.github.io/outlook-auto-reply-addin-v2",
+  "dependencies": {
+    "@azure/msal-browser": "^4.22.1"
+  }
 }
