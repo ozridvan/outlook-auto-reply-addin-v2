@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
@@ -9,11 +9,10 @@
   <!-- Office JavaScript API -->
   <script src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
 
-  <!-- Fluent UI -->
+  <!-- Fluent UI Core (sadece temel stiller) -->
   <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css">
 
   <style>
-    /* ... mevcut CSS'in aynen kalsın ... */
     body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;margin:0;padding:12px;background:#f5f5f5;min-height:100vh;box-sizing:border-box}
     .container{width:100%;max-width:100%;margin:0;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);padding:16px;box-sizing:border-box;min-height:calc(100vh - 24px)}
     .header{text-align:center;margin-bottom:20px;border-bottom:2px solid #0078d4;padding-bottom:12px}
@@ -28,11 +27,14 @@
     .btn{background:#0078d4;color:#fff;border:none;padding:12px 24px;border-radius:4px;font-size:14px;font-weight:600;cursor:pointer;width:100%;margin-top:16px}
     .btn:hover{background:#106ebe}
     .btn:disabled{background:#d1d1d1;cursor:not-allowed}
-    .preview-section{margin-top:20px;padding:12px;background:#f8f9fa;border-radius:4px;border-left:4px solid #0078d4;max-height:200px;overflow-y:auto}
+    .preview-section{margin-top:20px;padding:12px;background:#f8f9fa;border-radius:4px;border-left:4px solid #0078d4;max-height:220px;overflow-y:auto}
     .preview-section h3{margin:0 0 12px 0;color:#323130;font-size:16px}
     .preview-content{font-size:13px;line-height:1.5;color:#605e5c;white-space:pre-line}
-    .oof-status-banner{background:#fff4e6;border:1px solid #ffb366;border-radius:4px;padding:12px;margin-bottom:16px;color:#cc7a00;font-weight:600;text-align:center}
-    .colleague-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d1d1d1;border-top:none;border-radius:0 0 4px 4px;max-height:200px;overflow-y:auto;z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,.1);display:none}
+    .status-message{padding:12px;border-radius:4px;margin-top:16px;text-align:center;font-weight:600;display:none}
+    .status-success{background:#dff6dd;color:#107c10;border:1px solid #92c5f7}
+    .status-error{background:#fde7e9;color:#d13438;border:1px solid #d13438}
+    .oof-status-banner{background:#fff4e6;border:1px solid #ffb366;border-radius:4px;padding:12px;margin-bottom:16px;color:#cc7a00;font-weight:600;text-align:center;display:none}
+    .colleague-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d1d1d1;border-top:none;border-radius:0 0 4px 4px;max-height:240px;overflow-y:auto;z-index:1000;box-shadow:0 2px 8px rgba(0,0,0,.1);display:none}
     .user-row{padding:8px 12px;cursor:pointer;border-bottom:1px solid #f3f2f1}
     .user-row:hover{background:#f3f2f1}
     .dn{font-size:14px}
@@ -41,7 +43,7 @@
 </head>
 <body>
   <div class="container">
-    <div id="oofStatusBanner" class="oof-status-banner" style="display:none;">
+    <div id="oofStatusBanner" class="oof-status-banner">
       <span id="oofStatusText">📧 Otomatik yanıt şu anda aktif</span>
     </div>
 
@@ -49,215 +51,465 @@
 
     <form id="autoReplyForm">
       <div class="form-group">
-        <label for="user-search-input">Yetkili Kişi:</label>
-        <input type="text" id="user-search-input" class="form-control" placeholder="Kişi ara..." autocomplete="off">
+        <label for="user-search-input">Yetkili Kişi <span style="color:#d13438">*</span></label>
+        <input type="text" id="user-search-input" class="form-control" placeholder="Kişi ara..." autocomplete="off" required>
         <div id="users-results" class="colleague-dropdown"></div>
+        <input type="hidden" id="selected-colleague-id">
       </div>
 
       <div class="form-group">
-        <label for="startDate">Başlangıç Tarihi ve Saati:</label>
+        <label for="startDate">Başlangıç Tarihi ve Saati</label>
         <div class="date-time-group">
-          <input type="date" id="startDate" class="form-control" required value="2025-09-15">
-          <input type="time" id="startTime" class="form-control" required value="07:30">
+          <input type="date" id="startDate" class="form-control" required>
+          <input type="time" id="startTime" class="form-control" required>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="endDate">Bitiş Tarihi ve Saati:</label>
+        <label for="endDate">Bitiş Tarihi ve Saati</label>
         <div class="date-time-group">
-          <input type="date" id="endDate" class="form-control" required value="2025-09-15">
-          <input type="time" id="endTime" class="form-control" required value="17:30">
+          <input type="date" id="endDate" class="form-control" required>
+          <input type="time" id="endTime" class="form-control" required>
         </div>
       </div>
 
-      <div id="statusMessage" class="status-message" style="display:none;"></div>
+      <div id="statusMessage" class="status-message"></div>
 
-      <!-- SUBMIT DEĞİL -->
-      <button type="button" id="set-oof-btn" class="btn">Otomatik Yanıtı Ayarla</button>
+      <button type="submit" id="btnSetAutoReply" class="btn">Otomatik Yanıtı Ayarla</button>
     </form>
 
     <div class="preview-section">
       <h3>📧 Mesaj Önizleme</h3>
       <div id="messagePreview" class="preview-content">Lütfen tüm alanları doldurun...</div>
-      <button id="copyPreviewButton" class="copy-button">📋 Kopyala</button>
+      <button id="copyPreviewButton" class="btn" style="width:auto;margin-top:8px">📋 Kopyala</button>
     </div>
 
     <div style="text-align:center;margin-top:20px;padding-top:16px;border-top:1px solid #e1dfdd;font-size:12px;color:#605e5c;">
-      <span id="versionInfo">Sürüm: 1.0.6 | Son Güncelleme: <span id="lastUpdate"></span></span>
+      <span id="versionInfo">Sürüm: 1.0.10 | Son Güncelleme: <span id="lastUpdate"></span></span>
+    </div>
+
+    <div id="instructionsModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <h3>📋 Otomatik Yanıt Ayarlama Talimatları</h3>
+        <div id="instructionsContent"></div>
+        <button id="btnModalOk" class="btn" type="button">Anladım</button>
+      </div>
     </div>
   </div>
 
-  <!-- MSAL -->
+  <!-- MSAL (NAA) -->
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@4.22.0/lib/msal-browser.min.js"></script>
 
   <script>
-    /* ==== Sabitler ==== */
+    /* =======================
+       AYARLAR
+    ======================= */
     const CLIENT_ID = "c2a8b650-50b2-446e-a8e9-bffa6698b77f";
     const TENANT_ID = "26371b5e-948e-4791-a055-003c90306b8c";
-    const USERS_SCOPES = ["User.Read.All","openid","profile"];
+    const GRAPH_SCOPES_OOF   = ["MailboxSettings.ReadWrite","openid","profile"];
+    const GRAPH_SCOPES_USERS = ["User.Read","People.Read","openid","profile"];
 
-    // --- yardımcılar ---
+    // Şablon (senin verdiğin metin)
+    const messageTemplate = {
+      subject: "Otomatik Yanıt: Yıllık İzin / Automatic Reply: Annual Leave",
+      body: `Sayın Yetkili,
+
+E-postanız için teşekkür ederim. {startDate} – {endDate} tarihleri arasında yıllık izinde olacağım ve bu süre içinde e-postalarınıza yanıt veremeyeceğim.
+
+{contactLine}
+
+Anlayışınız için teşekkür eder, iyi çalışmalar dilerim.
+
+Saygılarımla,
+{userName}
+{positionLine}
+{company}
+
+---
+
+Dear Sir/Madam,
+
+Thank you for your email. I will be out of the office on annual leave from {startDate} to {endDate}, and will not be able to respond to your message during this period.
+
+{contactLineEn}
+
+Thank you for your understanding.
+
+Kind regards,
+{userName}
+{positionLine}
+{company}`
+    };
+
+    /* =======================
+       GLOBAL DURUM
+    ======================= */
+    let pca = null;                 // MSAL PCA (NAA)
+    let selectedColleague = null;   // { id, name, email, phone, jobTitle }
+    let tokenCache = {};            // scope->token küçük cache
+
+    /* =======================
+       YARDIMCILAR
+    ======================= */
+    const $ = id => document.getElementById(id);
     const debounce = (fn,ms=300)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);}};
 
-    // ==== Kullanıcı Listeleme (Graph) ====
-    let pcaInstance=null;
+    const todayISODate = () => new Date().toISOString().split("T")[0];
+    const pad = n => String(n).padStart(2,"0");
 
-    async function getUsersToken(scopes=USERS_SCOPES){
-      if (window.pca) pcaInstance = window.pca;
-      if (!pcaInstance){
-        pcaInstance = await msal.createNestablePublicClientApplication({
-          auth:{ clientId: CLIENT_ID, authority: "https://login.microsoftonline.com/"+TENANT_ID }
-        });
-      }
-      try{
-        const r = await pcaInstance.acquireTokenSilent({ scopes });
-        return r.accessToken;
-      }catch(e){
-        throw new Error("Kullanıcı listesi için consent gerekli veya yetki yok (User.Read.All).");
-      }
+    function formatDisplayDate(dateStr, timeStr){
+      const d = new Date(`${dateStr}T${timeStr}`);
+      return d.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'})+` ${timeStr}`;
     }
 
-    async function graphGET(url, token, extraHeaders={}){
-      const res = await fetch(url,{ headers:{ "Authorization":"Bearer "+token, "Content-Type":"application/json", ...extraHeaders }});
-      if(!res.ok) throw new Error("Graph "+res.status+": "+(await res.text()));
-      return res.json();
+    function showStatus(type, message){
+      const el = $("statusMessage");
+      el.className = `status-message ${type==="success"?"status-success":"status-error"}`;
+      el.textContent = message;
+      el.style.display = "block";
+      setTimeout(()=>{ el.style.display="none"; }, 8000);
     }
 
-    async function listAllUsers(max=50, select="displayName,mail,userPrincipalName,jobTitle,department"){
-      const token = await getUsersToken();
-      let url = `https://graph.microsoft.com/v1.0/users?$select=${encodeURIComponent(select)}&$top=50`;
-      const out=[];
-      while(url && out.length<max){
-        const data = await graphGET(url, token);
-        out.push(...(data.value||[]));
-        url = data["@odata.nextLink"];
-      }
-      return out.slice(0,max);
-    }
+    function setDefaultDates(){
+      const startD = $("startDate"), endD = $("endDate");
+      const startT = $("startTime"), endT = $("endTime");
+      const today = todayISODate();
+      startD.min = endD.min = today;
+      startD.value = today;
+      endD.value = today; // İstek: “tarih kısımlarında günün tarihi set edilsin”
+      // makul varsayılan saatler
+      startT.value = "09:00";
+      endT.value   = "18:00";
 
-    async function searchUsersPrefix(q, top=25, select="displayName,mail,userPrincipalName,jobTitle,department"){
-      const token = await getUsersToken();
-      const esc = q.replace(/'/g,"''");
-      const filter = `startsWith(displayName,'${esc}') or startsWith(mail,'${esc}') or startsWith(userPrincipalName,'${esc}')`;
-      const url = `https://graph.microsoft.com/v1.0/users?$select=${encodeURIComponent(select)}&$filter=${encodeURIComponent(filter)}&$top=${top}`;
-      const data = await graphGET(url, token);
-      return data.value||[];
-    }
-
-    function renderUsers(list){
-      const el = document.getElementById("users-results");
-      if(!el) return;
-      el.innerHTML="";
-      if(!list.length){ el.style.display="none"; return; }
-      const frag = document.createDocumentFragment();
-      list.forEach(u=>{
-        const div=document.createElement("div");
-        div.className="user-row";
-        const dn=u.displayName||"(adsız)";
-        const upn=u.userPrincipalName||"";
-        const mail=u.mail||upn;
-        const jt=u.jobTitle||"";
-        const dep=u.department||"";
-        div.innerHTML = `
-          <div class="dn"><strong>${dn}</strong></div>
-          <div class="em">${mail}</div>
-          <div class="meta">${jt}${jt&&dep?' · ':''}${dep}</div>`;
-        div.addEventListener("click", ()=>{
-          const inp=document.getElementById("user-search-input");
-          inp.value = dn + " <" + mail + ">";
-          el.style.display="none";
-        });
-        frag.appendChild(div);
+      startD.addEventListener("change", ()=>{
+        if (endD.value < startD.value) endD.value = startD.value;
+        endD.min = startD.value;
+        updatePreview();
       });
-      el.appendChild(frag);
-      el.style.display="block";
     }
 
-    function initUserSearch(){
-      const input=document.getElementById("user-search-input");
-      const dropdown=document.getElementById("users-results");
-      if(!input || !dropdown) return;
-
-      const handler = debounce(async ()=>{
-        const q = input.value.trim();
-        try{
-          if(!q){ renderUsers(await listAllUsers(50)); }
-          else{ renderUsers(await searchUsersPrefix(q,25)); }
-        }catch(e){ console.error("[users] hata:", e.message||e); }
-      },300);
-
-      input.addEventListener("input", handler);
-      document.addEventListener("click", (e)=>{
-        if(!dropdown.contains(e.target) && e.target!==input) dropdown.style.display="none";
+    /* =======================
+       MSAL / TOKEN
+    ======================= */
+    async function ensurePCA(){
+      if (pca) return;
+      pca = await msal.createNestablePublicClientApplication({
+        auth:{ clientId: CLIENT_ID, authority: "https://login.microsoftonline.com/"+TENANT_ID }
       });
-      handler();
+      window.pca = pca; // users tarafı da aynısını kullansın
     }
 
-    // ==== OOF (Graph) ====
-    let pca; // global
     async function getGraphToken(scopes){
+      await ensurePCA();
+      const key = scopes.sort().join(" ");
+      if (tokenCache[key]) return tokenCache[key];
       try{
         const r = await pca.acquireTokenSilent({ scopes });
+        tokenCache[key] = r.accessToken;
         return r.accessToken;
-      }catch(e){
-        // ilk kullanımda admin consent yoksa bir kez popup gerekebilir (NAA destekler)
+      }catch{
         const r2 = await pca.acquireTokenPopup({ scopes });
+        tokenCache[key] = r2.accessToken;
         return r2.accessToken;
       }
     }
 
-    async function setOOFWithGraph(){
-      const scopes = ["MailboxSettings.ReadWrite","openid","profile"];
-      const token = await getGraphToken(scopes);
+    /* =======================
+       KULLANICI ARAMA
+    ======================= */
+    async function graphGET(url, token, extraHeaders={}){
+      const res = await fetch(url,{ headers:{ "Authorization":"Bearer "+token, "Content-Type":"application/json", ...extraHeaders }});
+      if (!res.ok) throw new Error("Graph "+res.status+": "+(await res.text()));
+      return res.json();
+    }
 
+    async function searchUsersPrefix(q, top=25, select="displayName,mail,userPrincipalName,jobTitle,mobilePhone,businessPhones"){
+      const token = await getGraphToken(GRAPH_SCOPES_USERS);
+      const esc = q.replace(/'/g,"''");
+      const filter = `startsWith(displayName,'${esc}') or startsWith(mail,'${esc}') or startsWith(userPrincipalName,'${esc}')`;
+      const url = `https://graph.microsoft.com/v1.0/users?$select=${encodeURIComponent(select)}&$filter=${encodeURIComponent(filter)}&$top=${top}`;
+      const data = await graphGET(url, token);
+      return (data.value||[]).map(u=>({
+        id: u.id,
+        name: u.displayName || "(adsız)",
+        email: u.mail || u.userPrincipalName || "",
+        jobTitle: u.jobTitle || "",
+        phone: (u.mobilePhone || (u.businessPhones && u.businessPhones[0])) || ""
+      }));
+    }
+
+    async function listUsersInitial(top=30, select="displayName,mail,userPrincipalName,jobTitle,mobilePhone,businessPhones"){
+      const token = await getGraphToken(GRAPH_SCOPES_USERS);
+      const url = `https://graph.microsoft.com/v1.0/users?$select=${encodeURIComponent(select)}&$top=${top}`;
+      const data = await graphGET(url, token);
+      return (data.value||[]).map(u=>({
+        id: u.id,
+        name: u.displayName || "(adsız)",
+        email: u.mail || u.userPrincipalName || "",
+        jobTitle: u.jobTitle || "",
+        phone: (u.mobilePhone || (u.businessPhones && u.businessPhones[0])) || ""
+      }));
+    }
+
+    function renderUsers(list){
+      const box = $("users-results");
+      box.innerHTML = "";
+      if (!list.length){ box.style.display="none"; return; }
+
+      const frag = document.createDocumentFragment();
+      list.forEach(u=>{
+        const div = document.createElement("div");
+        div.className = "user-row";
+        div.innerHTML = `
+          <div class="dn"><strong>${u.name}</strong></div>
+          <div class="em">${u.email}</div>
+          <div class="meta">${u.jobTitle}${u.jobTitle && u.phone?' · ':''}${u.phone||''}</div>`;
+        div.addEventListener("click", ()=>{
+          selectedColleague = u;
+          $("selected-colleague-id").value = u.id;
+          $("user-search-input").value = u.name; // serbest yazmayı engellemiyoruz ama kontrol ediyoruz
+          box.style.display="none";
+          updatePreview();
+        });
+        frag.appendChild(div);
+      });
+      box.appendChild(frag);
+      box.style.display="block";
+    }
+
+    function initUserSearch(){
+      const input = $("user-search-input");
+      const dropdown = $("users-results");
+
+      // yazı değişirse seçimi iptal et → liste seçimi ZORUNLU
+      input.addEventListener("input", ()=>{
+        selectedColleague = null;
+        $("selected-colleague-id").value = "";
+      });
+
+      const handler = debounce(async ()=>{
+        const q = input.value.trim();
+        try{
+          if (!q) renderUsers(await listUsersInitial());
+          else    renderUsers(await searchUsersPrefix(q,25));
+        }catch(e){ console.error("[users] hata:", e.message||e); }
+      }, 300);
+
+      input.addEventListener("focus", handler);
+      input.addEventListener("input", handler);
+
+      document.addEventListener("click", (e)=>{
+        if (!dropdown.contains(e.target) && e.target!==input) dropdown.style.display="none";
+      });
+    }
+
+    /* =======================
+       OOF DURUM / MESAJ OLUŞTURMA
+    ======================= */
+    function buildContactLines(col){
+      if (!col) {
+        return {
+          tr: 'Acil konularınız için lütfen başka bir yetkiliye başvurun.',
+          en: 'For urgent matters, please contact another authorized person.'
+        };
+      }
+      let tr = 'Acil konularınız için';
+      let en = 'For urgent matters, please contact';
+      if (col.name){ tr += ` ${col.name} ile`; en += ` ${col.name}`; }
+      if (col.email){ tr += ` ${col.email}`;    en += ` at ${col.email}`; }
+      if (col.phone){ tr += ` veya ${col.phone}`; en += ` or ${col.phone}`; }
+      tr += ' üzerinden iletişime geçebilirsiniz.'; en += '.';
+      return { tr, en };
+    }
+
+    async function getUserProfile(){
+      try{
+        const token = await getGraphToken(["User.Read","openid","profile"]);
+        const res = await fetch("https://graph.microsoft.com/v1.0/me?$select=displayName,mail,userPrincipalName,jobTitle,companyName",{
+          headers:{ "Authorization":"Bearer "+token, "Content-Type":"application/json" }
+        });
+        if (!res.ok) throw new Error("Graph "+res.status);
+        const u = await res.json();
+        return {
+          displayName: u.displayName || 'Kullanıcı',
+          emailAddress: u.mail || u.userPrincipalName || '',
+          jobTitle: u.jobTitle || '',
+          companyName: u.companyName || 'Öztiryakiler'
+        };
+      }catch(e){
+        // Office context fallback
+        const up = Office?.context?.mailbox?.userProfile || {};
+        return {
+          displayName: up.displayName || 'Kullanıcı',
+          emailAddress: up.emailAddress || '',
+          jobTitle: up.jobTitle || '',
+          companyName: 'Öztiryakiler'
+        };
+      }
+    }
+
+    function updatePreview(){
+      const preview = $("messagePreview");
+      const startDate = $("startDate").value;
+      const startTime = $("startTime").value;
+      const endDate   = $("endDate").value;
+      const endTime   = $("endTime").value;
+
+      if (!selectedColleague || !startDate || !startTime || !endDate || !endTime){
+        preview.textContent = "Lütfen tüm alanları doldurun...";
+        return;
+      }
+
+      const startDisp = formatDisplayDate(startDate, startTime);
+      const endDisp   = formatDisplayDate(endDate,   endTime);
+
+      // kullanıcı bilgisi asenkron, önizlemeyi bloklamayalım: basit bir isimle doldur, submit'te kesinleştiriyoruz
+      const up = Office?.context?.mailbox?.userProfile || {};
+      const positionLine = up.jobTitle || "";
+      const company = 'Öztiryakiler';
+      const contact = buildContactLines(selectedColleague);
+
+      const body = messageTemplate.body
+        .replaceAll('{startDate}', startDisp)
+        .replaceAll('{endDate}',   endDisp)
+        .replaceAll('{contactLine}',   contact.tr)
+        .replaceAll('{contactLineEn}', contact.en)
+        .replaceAll('{userName}',  up.displayName || 'Kullanıcı')
+        .replaceAll('{positionLine}', positionLine)
+        .replaceAll('{company}', company);
+
+      preview.textContent = `Konu: ${messageTemplate.subject}\n\n${body}`;
+    }
+
+    async function setOOFWithGraphMessage(messageBody, startDate, startTime, endDate, endTime){
+      const startLocal = `${startDate}T${startTime}:00`;
+      const endLocal   = `${endDate}T${endTime}:00`;
+
+      const token = await getGraphToken(GRAPH_SCOPES_OOF);
       const body = {
         automaticRepliesSetting:{
           status:"scheduled",
-          scheduledStartDateTime:{ dateTime:"2025-09-14T09:00:00.0000000", timeZone:"Turkey Standard Time" },
-          scheduledEndDateTime:{   dateTime:"2025-09-22T18:00:00.0000000", timeZone:"Turkey Standard Time" },
-          internalReplyMessage:"<p>Ofis dışındayım</p>",
-          externalReplyMessage:"<p>Ofis dışındayım</p>"
+          externalAudience:"all",
+          scheduledStartDateTime:{ dateTime: startLocal, timeZone:"Turkey Standard Time" },
+          scheduledEndDateTime:{   dateTime: endLocal,   timeZone:"Turkey Standard Time" },
+          internalReplyMessage: messageBody,
+          externalReplyMessage: messageBody
         }
       };
-
       const res = await fetch("https://graph.microsoft.com/v1.0/me/mailboxSettings",{
         method:"PATCH",
         headers:{ "Authorization":"Bearer "+token, "Content-Type":"application/json" },
         body: JSON.stringify(body)
       });
-      if(!res.ok){ console.error("Graph hata:", await res.text()); return; }
-      console.log("OOF ayarlandı (204)");
+      if (!res.ok) throw new Error(await res.text());
     }
 
-    // ==== Office hazır olunca ====
-    Office.onReady(async ()=>{
-      // MSAL PCA (tek tane)
-      pca = await msal.createNestablePublicClientApplication({
-        auth:{ clientId: CLIENT_ID, authority: "https://login.microsoftonline.com/"+TENANT_ID }
+    function bindCopyPreview(){
+      $("copyPreviewButton").addEventListener("click", ()=>{
+        const txt = $("messagePreview").textContent || "";
+        const ta = document.createElement("textarea");
+        ta.value = txt; document.body.appendChild(ta);
+        ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+        const btn = $("copyPreviewButton"); const old = btn.textContent;
+        btn.textContent = "✅ Kopyalandı!"; setTimeout(()=>btn.textContent=old, 30000);
       });
-      // users tarafı da aynı instance'ı kullansın
-      window.pca = pca;
+    }
+
+    function showOofBannerUntil(dateObj){
+      const b = $("oofStatusBanner"), t=$("oofStatusText");
+      const d = dateObj.toLocaleDateString('tr-TR');
+      t.textContent = `📧 Otomatik yanıt şu anda aktif (${d} tarihine kadar)`;
+      b.style.display = "block";
+    }
+
+    /* =======================
+       FORM OLAYLARI
+    ======================= */
+    async function onSubmit(ev){
+      ev.preventDefault();
+
+      // ZORUNLULUK: listeden seçim
+      if (!selectedColleague || !$("selected-colleague-id").value){
+        $("user-search-input").focus();
+        showStatus("error","Lütfen listeden bir kişi seçin.");
+        return;
+      }
+
+      const startDate = $("startDate").value;
+      const startTime = $("startTime").value;
+      const endDate   = $("endDate").value;
+      const endTime   = $("endTime").value;
+
+      if (!startDate || !startTime || !endDate || !endTime){
+        showStatus("error","Lütfen tüm alanları doldurun!");
+        return;
+      }
+      const s = new Date(`${startDate}T${startTime}`);
+      const e = new Date(`${endDate}T${endTime}`);
+      if (s >= e){
+        showStatus("error","Bitiş tarihi başlangıçtan sonra olmalı.");
+        return;
+      }
+
+      const btn = $("btnSetAutoReply");
+      btn.disabled = true; btn.textContent = "Ayarlanıyor...";
+
+      try{
+        const user = await getUserProfile();
+        const contact = buildContactLines(selectedColleague);
+        const startDisp = formatDisplayDate(startDate,startTime);
+        const endDisp   = formatDisplayDate(endDate,endTime);
+        const positionLine = user.jobTitle || "";
+        const body = messageTemplate.body
+          .replaceAll('{startDate}', startDisp)
+          .replaceAll('{endDate}',   endDisp)
+          .replaceAll('{contactLine}',   contact.tr)
+          .replaceAll('{contactLineEn}', contact.en)
+          .replaceAll('{userName}',  user.displayName || 'Kullanıcı')
+          .replaceAll('{positionLine}', positionLine)
+          .replaceAll('{company}',   user.companyName || 'Öztiryakiler');
+
+        // OOF SET
+        await setOOFWithGraphMessage(body, startDate, startTime, endDate, endTime);
+
+        // Önizlemeyi güncelle ve banner göster
+        updatePreview();
+        showStatus("success","Otomatik yanıt Graph API ile başarıyla ayarlandı!");
+        showOofBannerUntil(e);
+      }catch(err){
+        console.error("OOF hata:", err);
+        showStatus("error","Otomatik yanıt ayarlanırken hata: " + (err.message||err));
+      }finally{
+        btn.disabled = false; btn.textContent = "Otomatik Yanıtı Ayarla";
+      }
+    }
+
+    /* =======================
+       INIT
+    ======================= */
+    Office.onReady(async (info)=>{
+      // MSAL hazırla
+      await ensurePCA();
+
+      // varsayılan tarih/saatler = bugün
+      setDefaultDates();
 
       // kullanıcı araması
       initUserSearch();
 
-      // butona güvenli handler
-      const btn = document.getElementById("set-oof-btn");
-      btn.addEventListener("click", async (ev)=>{
-        ev.preventDefault();
-        ev.stopPropagation();
-        btn.disabled = true;
-        try{ await setOOFWithGraph(); }
-        finally{ btn.disabled = false; }
-      });
+      // önizleme ve kopyala
+      bindCopyPreview();
+      updatePreview();
 
-      // kopyala butonu (senin mevcut fonksiyonun yoksa basit bir tane)
-      const copyBtn = document.getElementById("copyPreviewButton");
-      copyBtn?.addEventListener("click", ()=>{
-        const t = document.getElementById("messagePreview")?.innerText || "";
-        navigator.clipboard?.writeText(t);
-      });
-    }); /* <-- BURA ÖNEMLİ: Office.onReady düzgün kapanıyor */
+      // sürüm/son güncelleme
+      $("lastUpdate").textContent = new Date().toLocaleDateString('tr-TR');
+
+      // form submit
+      $("autoReplyForm").addEventListener("submit", onSubmit);
+
+      // modal kapat
+      $("btnModalOk").addEventListener("click", ()=>{$("instructionsModal").style.display="none";});
+    });
   </script>
 </body>
 </html>
