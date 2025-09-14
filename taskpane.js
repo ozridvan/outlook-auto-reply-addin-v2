@@ -16,8 +16,6 @@ Office.onReady((info) => {
     console.log('Office.onReady called', info);
     if (info.host === Office.HostType.Outlook) {
         initializeApp();
-        displayVersionInfo();
-        checkApiSupport();
         checkOOFStatusNew();
     }
 });
@@ -155,26 +153,6 @@ async function checkOOFStatusNew() {
     }
 }
 
-async function displayVersionInfo() {
-    const versionInfoElement = document.getElementById("version-info");
-
-    try {
-        const clientInfo = getOutlookClientInfo();
-
-        // Alınan bilgileri kullanıcıya göstermek için HTML içeriğini oluştur
-        let htmlContent = `
-            <ul>
-                <li><strong>Uygulama:</strong> ${clientInfo.host}</li>
-                <li><strong>Versiyon:</strong> ${clientInfo.applicationVersion}</li>
-                <li><strong>Platform:</strong> ${clientInfo.platform}</li>
-            </ul>
-        `;
-        versionInfoElement.innerHTML = htmlContent;
-
-    } catch (error) {
-        versionInfoElement.innerHTML = `<p style="color: red;">Hata: ${error.message}</p>`;
-    }
-}
 
 /**
  * Office.context.diagnostics nesnesinden istemci bilgilerini alır ve
@@ -218,128 +196,7 @@ function getOutlookClientInfo() {
     };
 
     return clientInfo;
-}
-
-/**
- * Geliştiriciler için daha faydalı bir kontrol: Belirli bir API setinin
- * (Requirement Set) desteklenip desteklenmediğini kontrol eder.
- */
-function checkApiSupport() {
-    const apiSupportElement = document.getElementById("api-support-info");
-    
-    // Check IdentityAPI support
-    const isIdentityApiSupported = Office.context.requirements.isSetSupported('IdentityAPI', '1.3');
-
-    if (isIdentityApiSupported) {
-        apiSupportElement.innerHTML = `<p style="color: green;">✅ Kimlik Doğrulama API'si (IdentityAPI 1.3) bu platformda <strong>destekleniyor</strong>.</p>`;
-    } else {
-        apiSupportElement.innerHTML = `<p style="color: orange;">❌ Kimlik Doğrulama API'si (IdentityAPI 1.3) bu platformda <strong>desteklenmiyor</strong>.</p>`;
-    }
-    
-    // Check authentication status
-    checkAuthenticationStatus();
-}
-
-// Check and display authentication status
-async function checkAuthenticationStatus() {
-    const authStatusElement = document.getElementById("auth-status-info");
-    
-    try {
-        // Try to get access token without prompting user
-        const token = await authManager.getAccessToken({ allowSignInPrompt: false });
-        
-        if (token) {
-            authStatusElement.innerHTML = `
-                <p style="color: green;">✅ <strong>Kimlik doğrulama başarılı</strong></p>
-                <p style="font-size: 12px; color: #605e5c;">Microsoft Graph API'ye erişim sağlandı</p>
-                <button onclick="testGraphConnection()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Bağlantıyı Test Et</button>
-            `;
-        }
-    } catch (error) {
-        console.log('Authentication check failed:', error);
-        
-        let errorMessage = 'Kimlik doğrulama gerekli';
-        let errorColor = 'orange';
-        let actionButton = '';
-        
-        if (error.message.includes('not supported')) {
-            errorMessage = 'SSO bu platformda desteklenmiyor';
-            errorColor = 'red';
-        } else if (error.message.includes('not signed in')) {
-            errorMessage = 'Office\'e giriş yapılmamış';
-            actionButton = '<button onclick="attemptSignIn()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Giriş Yap</button>';
-        } else {
-            actionButton = '<button onclick="attemptSignIn()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Kimlik Doğrula</button>';
-        }
-        
-        authStatusElement.innerHTML = `
-            <p style="color: ${errorColor};">⚠️ <strong>${errorMessage}</strong></p>
-            <p style="font-size: 12px; color: #605e5c;">${error.message}</p>
-            ${actionButton}
-        `;
-    }
-}
-
-// Test Graph API connection
-async function testGraphConnection() {
-    const authStatusElement = document.getElementById("auth-status-info");
-    
-    try {
-        authStatusElement.innerHTML = '<p>🔄 Bağlantı test ediliyor...</p>';
-        
-        const userProfile = await getUserProfile();
-        
-        authStatusElement.innerHTML = `
-            <p style="color: green;">✅ <strong>Graph API bağlantısı başarılı</strong></p>
-            <p style="font-size: 12px; color: #605e5c;">Kullanıcı: ${userProfile.displayName}</p>
-            <p style="font-size: 12px; color: #605e5c;">E-posta: ${userProfile.emailAddress}</p>
-            <button onclick="checkAuthenticationStatus()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Yenile</button>
-        `;
-    } catch (error) {
-        authStatusElement.innerHTML = `
-            <p style="color: red;">❌ <strong>Bağlantı testi başarısız</strong></p>
-            <p style="font-size: 12px; color: #605e5c;">${error.message}</p>
-            <button onclick="checkAuthenticationStatus()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Tekrar Dene</button>
-        `;
-    }
-}
-
-// Attempt to sign in
-async function attemptSignIn() {
-    const authStatusElement = document.getElementById("auth-status-info");
-    
-    try {
-        authStatusElement.innerHTML = '<p>🔄 Giriş yapılıyor...</p>';
-        
-        const token = await authManager.getAccessToken({ allowSignInPrompt: true });
-        
-        if (token) {
-            authStatusElement.innerHTML = `
-                <p style="color: green;">✅ <strong>Giriş başarılı</strong></p>
-                <p style="font-size: 12px; color: #605e5c;">Microsoft Graph API'ye erişim sağlandı</p>
-                <button onclick="testGraphConnection()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Bağlantıyı Test Et</button>
-            `;
-        }
-    } catch (error) {
-        authStatusElement.innerHTML = `
-            <p style="color: red;">❌ <strong>Giriş başarısız</strong></p>
-            <p style="font-size: 12px; color: #605e5c;">${error.message}</p>
-            <button onclick="checkAuthenticationStatus()" style="padding: 4px 8px; font-size: 12px; margin-top: 8px;">Tekrar Dene</button>
-        `;
-    }
-}
-
-// Fallback initialization for testing in browser
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing app');
-    // Add a small delay to ensure Office.js has time to load
-    setTimeout(() => {
-        if (!window.officeInitialized) {
-            console.log('Office.js not initialized, using fallback');
-            initializeApp();
-        }
-    }, 1000);
-});
+} 
 
 function initializeApp() {
     console.log('Initializing app');
@@ -1027,114 +884,6 @@ async function updateOofSettings(isOofEnabled, startTime, endTime, internalMessa
 }
 
 
-  function setOOFViaEws(startLocal, endLocal, internalMsg, externalMsg, audience = "All") {
-    //console.log("token",Office.context.mailbox.getAccessToken());
-    
-    const email = Office.context.mailbox.userProfile.emailAddress;
-    const start = toLocalNaive(startLocal);
-    const end   = toLocalNaive(endLocal);
-  
-
-    updateOofSettings(true, start, end, internalMsg, internalMsg);
-
-    // const soap = `
-    // <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-    //                xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
-    //                xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
-    //   <soap:Header>
-    //     <t:RequestServerVersion Version="Exchange2013"/>
-    //   </soap:Header>
-    //   <soap:Body>
-    //     <m:SetUserOofSettingsRequest>
-    //       <t:Mailbox><t:Address>${email}</t:Address></t:Mailbox>
-    //       <t:UserOofSettings>
-    //         <t:OofState>Scheduled</t:OofState>
-    //         <t:ExternalAudience>${audience}</t:ExternalAudience>
-    //         <t:Duration>
-    //           <t:StartTime>${start}</t:StartTime>
-    //           <t:EndTime>${end}</t:EndTime>
-    //         </t:Duration>
-    //         <t:InternalReply><t:Message>${cdataWrap(internalMsg)}</t:Message></t:InternalReply>
-    //         <t:ExternalReply><t:Message>${cdataWrap(externalMsg)}</t:Message></t:ExternalReply>
-    //       </t:UserOofSettings>
-    //     </m:SetUserOofSettingsRequest>
-    //   </soap:Body>
-    // </soap:Envelope>`;
-  
-    // const M = "http://schemas.microsoft.com/exchange/services/2006/messages";
-  
-    // return new Promise((resolve, reject) => {
-    //   Office.context.mailbox.makeEwsRequestAsync(soap, res => {
-    //     if (res.status !== Office.AsyncResultStatus.Succeeded) {
-    //       return reject(res.error);
-    //     }
-    //     console.log("setOOFViaEws result",res)
-    //     const xml = new DOMParser().parseFromString(res.value, "text/xml");
-    //     const code = xml.getElementsByTagNameNS(M, "ResponseCode")[0]?.textContent;
-    //     const text = xml.getElementsByTagNameNS(M, "MessageText")[0]?.textContent || "";
-    //     if (code === "NoError") return resolve();
-    //     reject(new Error(`EWS ResponseCode: ${code || "Unknown"} ${text}`.trim()));
-    //   });
-    // });
-  }
-  
-  // (İsteğe bağlı) anında doğrulama:
-  function getOOFViaEws() {
-    const email = Office.context.mailbox.userProfile.emailAddress;
-    const soap = `
-    <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
-                   xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages"
-                   xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types">
-      <soap:Body>
-        <m:GetUserOofSettingsRequest>
-          <t:Mailbox><t:Address>${email}</t:Address></t:Mailbox>
-        </m:GetUserOofSettingsRequest>
-      </soap:Body>
-    </soap:Envelope>`;
-    const T = "http://schemas.microsoft.com/exchange/services/2006/types";
-    return new Promise((resolve, reject) => {
-      Office.context.mailbox.makeEwsRequestAsync(soap, res => {
-        if (res.status !== Office.AsyncResultStatus.Succeeded) return reject(res.error);
-        const xml = new DOMParser().parseFromString(res.value, "text/xml");
-        resolve({
-          state: xml.getElementsByTagNameNS(T, "OofState")[0]?.textContent,
-          start: xml.getElementsByTagNameNS(T, "StartTime")[0]?.textContent,
-          end:   xml.getElementsByTagNameNS(T, "EndTime")[0]?.textContent,
-          raw:   res.value
-        });
-      });
-    });
-  }
-  
-
-// // GET function to verify OOF settings
-// function getOOFViaEws() {
-//   const email = Office.context.mailbox.userProfile.emailAddress;
-//   const soap = `
-//   <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-//     <soap:Body>
-//       <GetUserOofSettingsRequest xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">
-//         <Mailbox xmlns="http://schemas.microsoft.com/exchange/services/2006/types">${email}</Mailbox>
-//       </GetUserOofSettingsRequest>
-//     </soap:Body>
-//   </soap:Envelope>`;
-  
-//   return new Promise((resolve, reject) => {
-//     Office.context.mailbox.makeEwsRequestAsync(soap, res => {
-//       if (res.status !== Office.AsyncResultStatus.Succeeded) return reject(res.error);
-//       const xml = new window.DOMParser().parseFromString(res.value, "text/xml");
-//       const state = xml.getElementsByTagName("OofState")[0]?.textContent;
-//       const start = xml.getElementsByTagName("StartTime")[0]?.textContent;
-//       const end   = xml.getElementsByTagName("EndTime")[0]?.textContent;
-//       const ext   = xml.getElementsByTagName("ExternalAudience")[0]?.textContent;
-      
-//       console.log('EWS GET Results:', { state, start, end, ext });
-//       console.log('EWS GET Response XML:', res.value);
-      
-//       resolve({ state, start, end, ext, raw: res.value });
-//     });
-//   });
-// }
 
 // Helper function to escape XML characters
 function escapeXml(text) {
@@ -1287,39 +1036,5 @@ function showStatus(type, message) {
     }, 8000); // Show longer for success messages
 }
 
-// Update version information
-function updateVersionInfo() {
-    const versionInfoElement = document.getElementById('versionInfo');
-    const lastUpdateElement = document.getElementById('lastUpdate');
-    
-    if (versionInfoElement) {
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('tr-TR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-        const timeStr = now.toLocaleTimeString('tr-TR', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        // Update version info with JavaScript variable
-        versionInfoElement.innerHTML = `Sürüm: ${version} | Son Güncelleme: <span id="lastUpdate">${dateStr} ${timeStr}</span>`;
-    }
-    
-    // if (lastUpdateElement) {
-    //     const now = new Date();
-    //     const dateStr = now.toLocaleDateString('tr-TR', {
-    //         day: '2-digit',
-    //         month: '2-digit',
-    //         year: 'numeric'
-    //     });
-    //     const timeStr = now.toLocaleTimeString('tr-TR', {
-    //         hour: '2-digit',
-    //         minute: '2-digit'
-    //     });
-    //     lastUpdateElement.textContent = `${dateStr} ${timeStr}`;
-    // }
-}
+
 

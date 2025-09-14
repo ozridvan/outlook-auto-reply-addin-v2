@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
@@ -10,8 +11,9 @@
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
 
     <!-- Fluent UI -->
-    <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css">
-    
+    <link rel="stylesheet"
+        href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css">
+
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -21,44 +23,44 @@
             min-height: 100vh;
             box-sizing: border-box;
         }
-        
+
         .container {
             width: 100%;
             max-width: 100%;
             margin: 0;
             background: white;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             padding: 16px;
             box-sizing: border-box;
             min-height: calc(100vh - 24px);
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 20px;
             border-bottom: 2px solid #0078d4;
             padding-bottom: 12px;
         }
-        
+
         .header h1 {
             color: #0078d4;
             font-size: 20px;
             margin: 0;
             font-weight: 600;
         }
-        
+
         .form-group {
             margin-bottom: 16px;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
             color: #323130;
         }
-        
+
         .form-control {
             width: 100%;
             padding: 8px 12px;
@@ -67,35 +69,35 @@
             font-size: 14px;
             box-sizing: border-box;
         }
-        
+
         .form-control:focus {
             outline: none;
             border-color: #0078d4;
             box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
         }
-        
+
         .date-time-group {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
-        
+
         .date-time-group .form-control {
             flex: 1;
             min-width: 120px;
         }
-        
+
         @media (max-width: 350px) {
             .date-time-group {
                 flex-direction: column;
                 gap: 12px;
             }
-            
+
             .date-time-group .form-control {
                 width: 100%;
             }
         }
-        
+
         .btn {
             background-color: #0078d4;
             color: white;
@@ -108,16 +110,16 @@
             width: 100%;
             margin-top: 16px;
         }
-        
+
         .btn:hover {
             background-color: #106ebe;
         }
-        
+
         .btn:disabled {
             background-color: #d1d1d1;
             cursor: not-allowed;
         }
-        
+
         .language-toggle {
             display: flex;
             background-color: #f3f2f1;
@@ -125,7 +127,7 @@
             padding: 4px;
             margin-bottom: 20px;
         }
-        
+
         .language-toggle button {
             flex: 1;
             padding: 8px 12px;
@@ -135,12 +137,12 @@
             cursor: pointer;
             font-size: 14px;
         }
-        
+
         .language-toggle button.active {
             background-color: #0078d4;
             color: white;
         }
-        
+
         .preview-section {
             margin-top: 20px;
             padding: 12px;
@@ -150,20 +152,20 @@
             max-height: 200px;
             overflow-y: auto;
         }
-        
+
         .preview-section h3 {
             margin: 0 0 12px 0;
             color: #323130;
             font-size: 16px;
         }
-        
+
         .preview-content {
             font-size: 13px;
             line-height: 1.5;
             color: #605e5c;
             white-space: pre-line;
         }
-        
+
         .status-message {
             padding: 12px;
             border-radius: 4px;
@@ -171,19 +173,19 @@
             text-align: center;
             font-weight: 600;
         }
-        
+
         .status-success {
             background-color: #dff6dd;
             color: #107c10;
             border: 1px solid #92c5f7;
         }
-        
+
         .status-error {
             background-color: #fde7e9;
             color: #d13438;
             border: 1px solid #d13438;
         }
-        
+
         .modal {
             position: fixed;
             z-index: 1000;
@@ -191,9 +193,9 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.5);
         }
-        
+
         .modal-content {
             background-color: white;
             margin: 10% auto;
@@ -204,12 +206,12 @@
             max-height: 70vh;
             overflow-y: auto;
         }
-        
+
         .modal-content h3 {
             margin-top: 0;
             color: #0078d4;
         }
-        
+
         .instruction-step {
             margin: 12px 0;
             padding: 8px;
@@ -217,7 +219,7 @@
             border-left: 3px solid #0078d4;
             border-radius: 4px;
         }
-        
+
         .copy-button {
             background-color: #f3f2f1;
             border: 1px solid #d1d1d1;
@@ -227,11 +229,11 @@
             cursor: pointer;
             margin-left: 8px;
         }
-        
+
         .copy-button:hover {
             background-color: #e1dfdd;
         }
-        
+
         .preview-section .copy-button {
             margin-top: 8px;
             margin-left: 0;
@@ -242,11 +244,11 @@
             font-size: 13px;
             width: auto;
         }
-        
+
         .preview-section .copy-button:hover {
             background-color: #106ebe;
         }
-        
+
         .oof-status-banner {
             background-color: #fff4e6;
             border: 1px solid #ffb366;
@@ -257,12 +259,12 @@
             font-weight: 600;
             text-align: center;
         }
-        
+
         .oof-status-banner.active {
             background-color: #fff4e6;
             border-color: #ffb366;
         }
-        
+
         .colleague-dropdown {
             position: absolute;
             top: 100%;
@@ -275,64 +277,50 @@
             max-height: 200px;
             overflow-y: auto;
             z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-        
+
         .colleague-item {
             padding: 8px 12px;
             cursor: pointer;
             border-bottom: 1px solid #f3f2f1;
         }
-        
+
         .colleague-item:hover {
             background-color: #f3f2f1;
         }
-        
+
         .colleague-item.selected {
             background-color: #0078d4;
             color: white;
         }
-        
+
         .form-group {
             position: relative;
         }
     </style>
 </head>
 
-<body> 
+<body>
     <div class="container">
-        <div id="version-info" style="display: none;">
-            <p>Bilgiler yükleniyor...</p>
-        </div>
 
-        <hr>
-
-        <h2  style="display: none;">API Desteği Kontrolü</h2>
-        <div id="api-support-info" style="display: none;">
-            <p>Kontrol ediliyor...</p>
-        </div>
-        
-        <h2 style="display: none;">Kimlik Doğrulama Durumu</h2>
-        <div id="auth-status-info" style="display: none;">
-            <p>Kontrol ediliyor...</p>
-        </div>
-        
         <div id="oofStatusBanner" class="oof-status-banner" style="display: none;">
             <span id="oofStatusText">📧 Otomatik yanıt şu anda aktif</span>
         </div>
-        
+
         <div class="header">
             <h1>🏢 Otomatik Yanıt Yöneticisi</h1>
         </div>
-        
-        
+
+
         <form id="autoReplyForm">
             <div class="form-group">
                 <label for="colleague">Yetkili Kişi:</label>
-                <input type="text" id="colleague" class="form-control" placeholder="Kişi ara..." autocomplete="off"> <!-- TODO required ekle sonra -->
-                <div id="colleagueDropdown" class="colleague-dropdown" style="display: none;"></div>
+                <input type="text" id="user-search-input" class="form-control" placeholder="Kişi ara..." autocomplete="off">
+                <!-- TODO required ekle sonra -->
+                <div id="users-results" class="colleague-dropdown" style="display: none;"></div>
             </div>
-            
+
             <div class="form-group">
                 <label for="startDate">Başlangıç Tarihi ve Saati:</label>
                 <div class="date-time-group">
@@ -340,7 +328,7 @@
                     <input type="time" id="startTime" class="form-control" required value="07:30">
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label for="endDate">Bitiş Tarihi ve Saati:</label>
                 <div class="date-time-group">
@@ -348,14 +336,14 @@
                     <input type="time" id="endTime" class="form-control" required value="17:30">
                 </div>
             </div>
-            
+
             <div id="statusMessage" class="status-message" style="display: none;"></div>
-            
+
             <button type="submit" id="set-oof-btn" class="btn" onclick="setOOFWithGraph()">
                 Otomatik Yanıtı Ayarla
             </button>
         </form>
-        
+
         <div class="preview-section">
             <h3>📧 Mesaj Önizleme</h3>
             <div id="messagePreview" class="preview-content">
@@ -365,12 +353,13 @@
                 📋 Kopyala
             </button>
         </div>
-        
+
         <!-- Version Information -->
-        <div style="text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e1dfdd; font-size: 12px; color: #605e5c;">
+        <div
+            style="text-align: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e1dfdd; font-size: 12px; color: #605e5c;">
             <span id="versionInfo">Sürüm: 1.0.5 | Son Güncelleme: <span id="lastUpdate"></span></span>
         </div>
-        
+
         <div id="instructionsModal" class="modal" style="display: none;">
             <div class="modal-content">
                 <h3>📋 Otomatik Yanıt Ayarlama Talimatları</h3>
@@ -382,11 +371,157 @@
     <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@4.22.0/lib/msal-browser.min.js"></script>
 
     <script>
-        // Cache-busting for JS file
-        // const timestamp = new Date().getTime();
-        // const script = document.createElement('script');
-        // script.src = 'taskpane.js?v=' + timestamp;
-        // document.head.appendChild(script);
+        /* USERS BASLANGIC */
+        const USERS_SCOPES = ["User.ReadBasic.All", "openid", "profile"]; // daha fazla alan için "User.Read.All"
+        const INPUT_ID = "user-search-input";     // taskpane.html'deki input'un id'si
+        const RESULTS_ID = "users-results";         // sonuçları basacağımız container
+        const COUNT_ID = "users-count";           // (opsiyonel) toplam sayıyı göstereceğimiz yer
+        const ALLOW_POPUP = false;                   // ilk seferlik consent için popup'a izin vereceksen true yap
+        const CLIENT_ID = "c2a8b650-50b2-446e-a8e9-bffa6698b77f";
+        const TENANT_ID = "26371b5e-948e-4791-a055-003c90306b8c";
+
+        // pca: NAA ile oluşturulmuş PublicClient; yoksa burada oluştururuz
+        let pcaInstance = null;
+
+        // Debounce helper
+        function debounce(fn, ms = 300) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+        // Token alma (silent, gerekirse opsiyonel popup)
+        async function getUsersToken(scopes = USERS_SCOPES) {
+            // Global pca varsa onu kullan
+            if (window.pca) { pcaInstance = window.pca; }
+            if (!pcaInstance) {
+                // pca yoksa burada başlat (tek tenant önerilir)
+                pcaInstance = await msal.createNestablePublicClientApplication({
+                    auth: {
+                        clientId: CLIENT_ID,                      // Entra App (client) ID — DOLDUR
+                        authority: "https://login.microsoftonline.com/" + TENANT_ID // Tenant ID — DOLDUR
+                    }
+                });
+            }
+
+            try {
+                const r = await pcaInstance.acquireTokenSilent({ scopes });
+                return r.accessToken;
+            } catch (e) {
+                console.warn("[users] acquireTokenSilent fail:", e?.errorCode || e?.message);
+                if (!ALLOW_POPUP) throw new Error("Kullanıcı listesi için consent gerekiyor (popup kapalı). Admin consent verin veya ALLOW_POPUP=true yapın.");
+                const r2 = await pcaInstance.acquireTokenPopup({ scopes });
+                return r2.accessToken;
+            }
+        }
+
+        // Tek sayfalık Graph çağrısı
+        async function graphGET(url, token, extraHeaders = {}) {
+            const res = await fetch(url, {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                    ...extraHeaders
+                }
+            });
+            if (!res.ok) throw new Error(`Graph ${res.status}: ${await res.text()}`);
+            return res.json();
+        }
+
+        // Tamamını sayfalayarak çek (büyük tenantlarda limit ver)
+        async function listAllUsers(max = 1000, select = "displayName,mail,userPrincipalName,jobTitle,department") {
+            const token = await getUsersToken();
+            let url = `https://graph.microsoft.com/v1.0/users?$select=${encodeURIComponent(select)}&$top=100`;
+            const all = [];
+
+            while (url && all.length < max) {
+                const data = await graphGET(url, token);
+                all.push(...(data.value || []));
+                url = data["@odata.nextLink"];
+            }
+            return all.slice(0, max);
+        }
+
+        // Prefix arama (startswith) — header gerektirmez, hızlı ve stabil
+        async function searchUsersPrefix(q, top = 25, select = "displayName,mail,userPrincipalName,jobTitle,department") {
+            const token = await getUsersToken();
+            const esc = q.replace(/'/g, "''"); // OData kaçışı
+            const filter = `startsWith(displayName,'${esc}') or startsWith(mail,'${esc}') or startsWith(userPrincipalName,'${esc}')`;
+            const url = `https://graph.microsoft.com/v1.0/users?$select=${encodeURIComponent(select)}&$filter=${encodeURIComponent(filter)}&$top=${top}`;
+            const data = await graphGET(url, token);
+            return data.value || [];
+        }
+
+        // Fuzzy arama (opsiyonel) — $search; ConsistencyLevel:eventual ister
+        async function searchUsersFuzzy(q, top = 25, select = "displayName,mail,userPrincipalName,jobTitle,department") {
+            const token = await getUsersToken();
+            const search = `"displayName:${q}" OR "mail:${q}" OR "userPrincipalName:${q}"`;
+            const url = `https://graph.microsoft.com/v1.0/users?$search=${encodeURIComponent(search)}&$select=${encodeURIComponent(select)}&$top=${top}`;
+            const data = await graphGET(url, token, { "ConsistencyLevel": "eventual" });
+            return data.value || [];
+        }
+
+        // Basit render
+        function renderUsers(list) {
+            const el = document.getElementById(RESULTS_ID);
+            if (!el) return;
+            el.innerHTML = "";
+            if (!list.length) {
+                el.innerHTML = `<div class="muted">Kayıt yok</div>`;
+                if (document.getElementById(COUNT_ID)) document.getElementById(COUNT_ID).textContent = "0";
+                return;
+            }
+            const frag = document.createDocumentFragment();
+            list.forEach(u => {
+                const item = document.createElement("div");
+                item.className = "user-row";
+                // güvenli yazdır
+                const dn = u.displayName || "(adsız)";
+                const upn = u.userPrincipalName || "";
+                const mail = u.mail || upn;
+                const jt = u.jobTitle || "";
+                const dep = u.department || "";
+                item.innerHTML = `
+      <div class="dn"><strong>${dn}</strong></div>
+      <div class="em">${mail}</div>
+      <div class="meta">${jt}${jt && dep ? ' · ' : ''}${dep}</div>
+    `;
+                frag.appendChild(item);
+            });
+            el.appendChild(frag);
+            if (document.getElementById(COUNT_ID)) document.getElementById(COUNT_ID).textContent = String(list.length);
+        }
+
+        // Input olaylarını bağla (prefix arama)
+        function initUserSearch() {
+            const input = document.getElementById(INPUT_ID);
+            if (!input) {
+                console.warn(`[users] ${INPUT_ID} bulunamadı`);
+                return;
+            }
+            const handler = debounce(async () => {
+                const q = input.value.trim();
+                try {
+                    if (!q) {
+                        // boşken ilk 50 kullanıcıyı listele (istenmezse kaldır)
+                        const list = await listAllUsers(50);
+                        renderUsers(list);
+                    } else {
+                        const list = await searchUsersPrefix(q, 25);
+                        renderUsers(list);
+                    }
+                } catch (e) {
+                    console.error("[users] arama hatası:", e.message || e);
+                }
+            }, 300);
+
+            input.addEventListener("input", handler);
+            // sayfa ilk açıldığında küçük bir liste göster
+            handler();
+        }
+
+        // Office hazır olunca bağla (taskpane.js’te zaten Office.onReady varsa çakışmaz)
+        Office.onReady(() => {
+            try { initUserSearch(); } catch (e) { console.error("[users] init hatası:", e); }
+        });
+        /* USERS SON */
+
 
         let pca;
 
@@ -397,58 +532,58 @@
             }
 
             pca = await msal.createNestablePublicClientApplication({
-            auth: {
-                clientId: "c2a8b650-50b2-446e-a8e9-bffa6698b77f",
-                authority: "https://login.microsoftonline.com/26371b5e-948e-4791-a055-003c90306b8c" // tek tenant için önerilir
-            }
-            });
-
-        async function getGraphToken(scopes) {
-            // 1) Sessiz
-            try {
-                // console.log("SSO öncesi");
-                const r = await pca.acquireTokenSilent({ scopes });
-                // accessToken = r.accessToken;
-                // console.log("SSO sonrası", r.accessToken);
-                return r.accessToken;
-            } catch (e) {
-            // 2) İlk kurulumda tek seferlik popup (NAA destekler)
-            try {
-                const r2 = await pca.acquireTokenPopup({ scopes });
-                return r2.accessToken;
-            } catch (e2) {
-                throw new Error(`Token alınamadı: ${e2.errorCode || e2.message}`);
-            }
-            }
-        }
-
-        async function setOOFWithGraph() {
-            try {
-            const scopes = ["MailboxSettings.ReadWrite", "openid", "profile"];
-            const token = await getGraphToken(scopes);
-            const body = {
-                automaticRepliesSetting: {
-                status: "scheduled",
-                scheduledStartDateTime: { dateTime: "2025-09-14T09:00:00.0000000", timeZone: "Turkey Standard Time" },
-                scheduledEndDateTime:   { dateTime: "2025-09-22T18:00:00.0000000", timeZone: "Turkey Standard Time" },
-                internalReplyMessage: "<p>Ofis dışındayım</p>",
-                externalReplyMessage: "<p>Ofis dışındayım</p>"
+                auth: {
+                    clientId: CLIENT_ID,
+                    authority: "https://login.microsoftonline.com/" + TENANT_ID // tek tenant için önerilir
                 }
-            };
-
-console.log("Request:", body);
-            const res = await fetch("https://graph.microsoft.com/v1.0/me/mailboxSettings", {
-                method: "PATCH",
-                headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify(body)
             });
-console.log("Response:", res);
-            if (res.ok) console.log("OOF ayarlandı (204)");
-            else console.error("Graph hata:", await res.text());
-            } catch (err) {
-            console.error("Token alınamadı:", err.message || err);
+
+            async function getGraphToken(scopes) {
+                // 1) Sessiz
+                try {
+                    // console.log("SSO öncesi");
+                    const r = await pca.acquireTokenSilent({ scopes });
+                    // accessToken = r.accessToken;
+                    // console.log("SSO sonrası", r.accessToken);
+                    return r.accessToken;
+                } catch (e) {
+                    // 2) İlk kurulumda tek seferlik popup (NAA destekler)
+                    try {
+                        const r2 = await pca.acquireTokenPopup({ scopes });
+                        return r2.accessToken;
+                    } catch (e2) {
+                        throw new Error(`Token alınamadı: ${e2.errorCode || e2.message}`);
+                    }
+                }
             }
-        }
+
+            async function setOOFWithGraph() {
+                try {
+                    const scopes = ["MailboxSettings.ReadWrite", "openid", "profile"];
+                    const token = await getGraphToken(scopes);
+                    const body = {
+                        automaticRepliesSetting: {
+                            status: "scheduled",
+                            scheduledStartDateTime: { dateTime: "2025-09-14T09:00:00.0000000", timeZone: "Turkey Standard Time" },
+                            scheduledEndDateTime: { dateTime: "2025-09-22T18:00:00.0000000", timeZone: "Turkey Standard Time" },
+                            internalReplyMessage: "<p>Ofis dışındayım</p>",
+                            externalReplyMessage: "<p>Ofis dışındayım</p>"
+                        }
+                    };
+
+                    const res = await fetch("https://graph.microsoft.com/v1.0/me/mailboxSettings", {
+                        method: "PATCH",
+                        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                        body: JSON.stringify(body)
+                    });
+                    console.log("Response:", res);
+                    if (res.ok) console.log("OOF ayarlandı (204)");
+                    else console.error("Graph hata:", await res.text());
+                } catch (err) {
+                    console.error("Token alınamadı:", err.message || err);
+                }
+            }
     </script>
 </body>
+
 </html>
