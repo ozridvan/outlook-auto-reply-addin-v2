@@ -76,27 +76,16 @@
       box-shadow: 0 0 0 2px rgba(0, 120, 212, .2)
     }
 
-    .date-time-group {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap
-    }
-
-    .date-time-group .form-control {
-      flex: 1;
-      min-width: 120px
-    }
-
-    @media (max-width:250px) {
-      .date-time-group {
-        flex-direction: column;
-        gap: 12px
-      }
-
-      .date-time-group .form-control {
-        width: 100%
-      }
-    }
+    .date-time-group{
+  display:flex;
+  flex-wrap:nowrap;       /* asla alt satıra düşmesin */
+  gap:8px;
+  justify-content:center; /* grubu ortala */
+  align-items:center;
+}
+.date-time-group .form-control{ width:auto; min-width:0; } /* global 100%'ü kır */
+.date-time-group input[type="date"]{ flex:1 1 160px; }     /* tarih esner */
+.date-time-group input[type="time"]{ flex:0 0 15ch; }  
 
     .btn {
       background: #0078d4;
