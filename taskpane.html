@@ -674,10 +674,10 @@ Kind regards,
         let endDateText = "";
         if (oofSettings.scheduledEndDateTime) {
           const endDate = new Date(oofSettings.scheduledEndDateTime.dateTime);
-          endDate = new Date(endDate.getTime() - endDate.getTimezoneOffset() * 60 * 1000);
-          console.log('fmtLocal(s):', fmtLocal(endDate));
+          var showendDate = new Date(endDate.getTime() - endDate.getTimezoneOffset() * 60 * 1000);
+          console.log('fmtLocal(s):', showendDate);
           // console.log('oofSettings:', fmtLocal(s));
-          endDateText = ` (${endDate.toLocaleDateString('tr-TR')} ${endDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} tarihine kadar)`;
+          endDateText = ` (${showendDate.toLocaleDateString('tr-TR')} ${showendDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} tarihine kadar)`;
         } else if (dateObj) {
           endDateText = ` (${dateObj.toLocaleDateString('tr-TR')} ${dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} tarihine kadar)`;
         }
