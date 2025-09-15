@@ -642,12 +642,12 @@ Kind regards,
         const res = await fetch("https://graph.microsoft.com/v1.0/me/mailboxSettings/automaticRepliesSetting", {
           headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }
         });
-        
+
         if (!res.ok) {
           console.error("Failed to fetch OOF status:", res.status);
           return null;
         }
-        
+
         const data = await res.json();
         return data;
       } catch (error) {
@@ -658,52 +658,33 @@ Kind regards,
 
     // Show OOF banner with actual status from API
     async function showOofBannerUntil(dateObj) {
+      const tz = "Turkey Standard Time";
+      const fmtLocal = d => {
+        const p = n => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds() || 0)}`;
+      };
+
       const b = $("oofStatusBanner"), t = $("oofStatusText");
-      
+
       // Try to get actual OOF status from API
       const oofSettings = await getOofStatus();
-      
+
       if (oofSettings && (oofSettings.status === "enabled" || oofSettings.status === "scheduled")) {
         // Use the end date from API if available
         let endDateText = "";
         if (oofSettings.scheduledEndDateTime) {
-          const endDate = new Date(oofSettings.scheduledEndDateTime.dateTime);
-          console.log('endDate:',endDate);
-          console.log('oofSettings:',oofSettings);
-          endDateText = ` (${endDate.toLocaleDateString('tr-TR')} ${endDate.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})} tarihine kadar)`;
+          const endDate = new Date(oofSettings.scheduledEndDateTime);
+          console.log('fmtLocal(s):', fmtLocal(s));
+          console.log('oofSettings:', fmtLocal(s));
+          endDateText = ` (${endDate.toLocaleDateString('tr-TR')} ${endDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} tarihine kadar)`;
         } else if (dateObj) {
-          endDateText = ` (${dateObj.toLocaleDateString('tr-TR')} ${dateObj.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})} tarihine kadar)`;
-      }
+          endDateText = ` (${dateObj.toLocaleDateString('tr-TR')} ${dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} tarihine kadar)`;
+        }
 
         t.textContent = `📧 Otomatik yanıt şu anda aktif${endDateText}`;
         b.style.display = "block";
       } else {
         // Hide banner if no active OOF
-        b.style.display = "none";
-      }
-    }
-
-    // Check and show OOF status on app initialization
-    async function checkAndShowOofStatus() {
-      const b = $("oofStatusBanner"), t = $("oofStatusText");
-      
-      try {
-        const oofSettings = await getOofStatus();
-        
-        if (oofSettings && (oofSettings.status === "enabled" || oofSettings.status === "scheduled")) {
-          let endDateText = "";
-          if (oofSettings.scheduledEndDateTime) {
-            const endDate = new Date(oofSettings.scheduledEndDateTime.dateTime);
-            endDateText = ` (${endDate.toLocaleDateString('tr-TR')} tarihine kadar)`;
-          }
-          
-          t.textContent = `📧 Otomatik yanıt şu anda aktif${endDateText}`;
-          b.style.display = "block";
-        } else {
-          b.style.display = "none";
-        }
-      } catch (error) {
-        console.error("Error checking OOF status:", error);
         b.style.display = "none";
       }
     }
@@ -741,7 +722,7 @@ Kind regards,
 
         const contact = buildContactLines(selectedColleague); // mevcut fonksiyon
         const startDisp = formatDisplayDate(sD, sT);
-        const endDisp   = formatDisplayDate(eD, eT);
+        const endDisp = formatDisplayDate(eD, eT);
         const positionLine = user.jobTitle || "";
 
         const messageBodyHtml = `
@@ -749,7 +730,7 @@ Kind regards,
         <p>E-postanız için teşekkür ederim. ${startDisp} – ${endDisp} tarihleri arasında <strong>yıllık izindeyim</strong> ve bu süre içinde e-postalarınıza yanıt veremeyeceğim.</p>
         <p>Acil konularınız için <strong>${selectedColleague.name}</strong> ile
           ${selectedColleague.email ? `<a href="mailto:${selectedColleague.email}">${selectedColleague.email}</a>` : ''}
-          ${selectedColleague.phone ? ` veya <a href="tel:${selectedColleague.phone.replace(/\s+/g,'')}">${selectedColleague.phone}</a>` : ''} 
+          ${selectedColleague.phone ? ` veya <a href="tel:${selectedColleague.phone.replace(/\s+/g, '')}">${selectedColleague.phone}</a>` : ''} 
           üzerinden iletişime geçebilirsiniz.</p>
         <p>Teşekkür eder, iyi çalışmalar dilerim.</p>
         <p>Saygılarımla,<br>${user.displayName}<br>${positionLine || ''}<br>${user.companyName || 'Öztiryakiler'}</p>
@@ -758,7 +739,7 @@ Kind regards,
         <p>Thank you for your email. I will be  <strong>out of the office</strong> on annual leave from ${startDisp} to ${endDisp} and will not be able to respond to your message during this period.</p>
         <p>For urgent matters, please contact <strong>${selectedColleague.name}</strong>
           ${selectedColleague.email ? ` at <a href="mailto:${selectedColleague.email}">${selectedColleague.email}</a>` : ''}
-          ${selectedColleague.phone ? ` or <a href="tel:${selectedColleague.phone.replace(/\s+/g,'')}">${selectedColleague.phone}</a>` : ''}.
+          ${selectedColleague.phone ? ` or <a href="tel:${selectedColleague.phone.replace(/\s+/g, '')}">${selectedColleague.phone}</a>` : ''}.
         </p>
         <p>Kind regards,<br>${user.displayName}<br>${positionLine || ''}<br>${user.companyName || 'Öztiryakiler'}</p>
         `;
@@ -789,9 +770,9 @@ Kind regards,
       $("lastUpdate").textContent = new Date().toLocaleDateString('tr-TR');
       $("autoReplyForm").addEventListener("submit", onSubmit);
       $("btnModalOk").addEventListener("click", () => { $("instructionsModal").style.display = "none"; });
-      
+
       // Check and show current OOF status
-      await checkAndShowOofStatus();
+      await showOofBannerUntil();
     });
   </script>
 </body>
