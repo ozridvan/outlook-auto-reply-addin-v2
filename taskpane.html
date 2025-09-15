@@ -676,6 +676,7 @@ Kind regards,
         const contact = buildContactLines(selectedColleague); // mevcut fonksiyon
         const startDisp = formatDisplayDate(sD, sT);
         const endDisp   = formatDisplayDate(eD, eT);
+        const positionLine = user.jobTitle || "";
 
         const messageBodyHtml = `
         <p>Sayın Yetkili,</p>
@@ -696,15 +697,14 @@ Kind regards,
         <p>Kind regards,<br>${user.displayName}<br>${positionLine || ''}<br>${user.companyName || 'Öztiryakiler'}</p>
         `;
 
-        const positionLine = user.jobTitle || "";
-        const body = messageBodyHtml
-          .replaceAll('{startDate}', startDisp)
-          .replaceAll('{endDate}', endDisp)
-          .replaceAll('{contactLine}', contact.tr)
-          .replaceAll('{contactLineEn}', contact.en)
-          .replaceAll('{userName}', user.displayName || '')
-          .replaceAll('{positionLine}', positionLine)
-          .replaceAll('{company}', user.companyName || 'Öztiryakiler');
+        // const body = messageBodyHtml
+        //   .replaceAll('{startDate}', startDisp)
+        //   .replaceAll('{endDate}', endDisp)
+        //   .replaceAll('{contactLine}', contact.tr)
+        //   .replaceAll('{contactLineEn}', contact.en)
+        //   .replaceAll('{userName}', user.displayName || '')
+        //   .replaceAll('{positionLine}', positionLine)
+        //   .replaceAll('{company}', user.companyName || 'Öztiryakiler');
 
         await setOOFWithGraphMessage(body, sD, sT, eD, eT);
         updatePreview();
