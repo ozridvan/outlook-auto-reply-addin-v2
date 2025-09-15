@@ -668,11 +668,11 @@ Kind regards,
         let endDateText = "";
         if (oofSettings.scheduledEndDateTime) {
           const endDate = new Date(oofSettings.scheduledEndDateTime.dateTime);
-          endDateText = ` (${endDate.toLocaleDateString('tr-TR')} tarihine kadar)`;
+          endDateText = ` (${endDate.toLocaleDateString('tr-TR')} ${endDate.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})} tarihine kadar)`;
         } else if (dateObj) {
-          endDateText = ` (${dateObj.toLocaleDateString('tr-TR')} tarihine kadar)`;
-        }
-        
+          endDateText = ` (${dateObj.toLocaleDateString('tr-TR')} ${dateObj.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})} tarihine kadar)`;
+      }
+
         t.textContent = `📧 Otomatik yanıt şu anda aktif${endDateText}`;
         b.style.display = "block";
       } else {
