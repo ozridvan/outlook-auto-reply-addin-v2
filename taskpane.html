@@ -671,6 +671,8 @@ Kind regards,
       btn.disabled = true; btn.textContent = "Ayarlanıyor...";
 
       try {
+        const user = await getUserProfile();
+
         const contact = buildContactLines(selectedColleague); // mevcut fonksiyon
         const startDisp = formatDisplayDate(sD, sT);
         const endDisp   = formatDisplayDate(eD, eT);
@@ -694,7 +696,6 @@ Kind regards,
         <p>Kind regards,<br>${user.displayName}<br>${positionLine || ''}<br>${user.companyName || 'Öztiryakiler'}</p>
         `;
 
-        const user = await getUserProfile();
         const positionLine = user.jobTitle || "";
         const body = messageBodyHtml
           .replaceAll('{startDate}', startDisp)
