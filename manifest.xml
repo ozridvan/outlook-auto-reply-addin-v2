@@ -5,32 +5,26 @@
   xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
   xsi:type="MailApp">
 
-  <!-- Kimlik -->
   <Id>c2a8b650-50b2-446e-a8e9-bffa6698b77f</Id>
-  <Version>1.0.3.4</Version>
+  <Version>1.0.3.7</Version>
   <ProviderName>Öztiryakiler Bilgi Teknolojileri</ProviderName>
   <DefaultLocale>tr-TR</DefaultLocale>
   <DisplayName DefaultValue="Otomatik Yanıt Yöneticisi"/>
   <Description DefaultValue="Şirket standart otomatik yanıt mesajları için gelişmiş yönetici"/>
 
-  <!-- İkon / Destek -->
-  <IconUrl DefaultValue="https://zealous-coast-0823e701e.2.azurestaticapps.net/assets/icon-64.png"/>
-  <HighResolutionIconUrl DefaultValue="https://zealous-coast-0823e701e.2.azurestaticapps.net/assets/icon-128.png"/>
+  <IconUrl DefaultValue="https://zealous-coast-0823e701e.2.azurestaticapps.net/assets/icon-64.png?v=1037"/>
+  <HighResolutionIconUrl DefaultValue="https://zealous-coast-0823e701e.2.azurestaticapps.net/assets/icon-128.png?v=1037"/>
   <SupportUrl DefaultValue="https://zealous-coast-0823e701e.2.azurestaticapps.net/"/>
 
-  <!-- Hedef Host -->
-  <Hosts>
-    <Host Name="Mailbox"/>
-  </Hosts>
+  <Hosts><Host Name="Mailbox"/></Hosts>
 
-  <!-- Minimum gereksinimler -->
   <Requirements>
     <Sets DefaultMinVersion="1.1">
       <Set Name="Mailbox" MinVersion="1.1"/>
     </Sets>
   </Requirements>
 
-  <!-- Eski form modeli (paket tipini netleştirir) -->
+  <!-- FormSettings: sadece SourceLocation (RequestedHeight YOK) -->
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
@@ -40,22 +34,20 @@
     </Form>
   </FormSettings>
 
-  <!-- İzinler -->
   <Permissions>ReadItem</Permissions>
 
-  <!-- Aktivasyon kuralı -->
   <Rule xsi:type="RuleCollection" Mode="Or">
     <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read"/>
   </Rule>
 
-  <!-- İsteğe bağlı ama şemanın kabul ettiği sırada -->
   <DisableEntityHighlighting>false</DisableEntityHighlighting>
 
-  <!-- === Mail VersionOverrides v1.0 (KÖKTE) === -->
+  <!-- v1.0 KÖK: sadece sarmalayıcı -->
   <VersionOverrides
     xmlns="http://schemas.microsoft.com/office/mailappversionoverrides"
     xsi:type="VersionOverridesV1_0">
 
+    <!-- === v1.1: Komut yüzeyleri + Module doğru sırada === -->
     <VersionOverrides
       xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1"
       xsi:type="VersionOverridesV1_1">
@@ -70,9 +62,8 @@
         <Host xsi:type="MailHost">
           <DesktopFormFactor>
             <FunctionFile resid="Commands.Url"/>
-			
-			
-			<ExtensionPoint xsi:type="MessageReadCommandSurface">
+
+            <ExtensionPoint xsi:type="MessageReadCommandSurface">
               <OfficeTab id="TabDefault">
                 <Group id="MsgRead.Group">
                   <Label resid="Group.Label"/>
@@ -89,35 +80,36 @@
                     </Icon>
                     <Action xsi:type="ShowTaskpane">
                       <SourceLocation resid="Taskpane.Url"/>
-					  <SupportsPinning>true</SupportsPinning>
+                      <SupportsPinning>true</SupportsPinning>
                     </Action>
                   </Control>
                 </Group>
               </OfficeTab>
             </ExtensionPoint>
-			<ExtensionPoint xsi:type="MessageComposeCommandSurface">
-			  <OfficeTab id="TabDefault">
-				<Group id="MsgCompose.Group">
-				  <Label resid="Group.Label"/>
-				  <Control xsi:type="Button" id="Hello.Button.Compose">
-					<Label resid="Button.Label"/>
-					<Supertip>
-					  <Title resid="Button.Label"/>
-					  <Description resid="Button.Tooltip"/>
-					</Supertip>
-					<Icon>
-					  <bt:Image size="16" resid="Icon.16"/>
-					  <bt:Image size="32" resid="Icon.32"/>
-					  <bt:Image size="80" resid="Icon.80"/>
-					</Icon>
-					<Action xsi:type="ShowTaskpane">
-					  <SourceLocation resid="Taskpane.Url"/>
-					  <SupportsPinning>true</SupportsPinning>
-					</Action>
-				  </Control>
-				</Group>
-			  </OfficeTab>
-			</ExtensionPoint>
+
+            <ExtensionPoint xsi:type="MessageComposeCommandSurface">
+              <OfficeTab id="TabDefault">
+                <Group id="MsgCompose.Group">
+                  <Label resid="Group.Label"/>
+                  <Control xsi:type="Button" id="Hello.Button.Compose">
+                    <Label resid="Button.Label"/>
+                    <Supertip>
+                      <Title resid="Button.Label"/>
+                      <Description resid="Button.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.16"/>
+                      <bt:Image size="32" resid="Icon.32"/>
+                      <bt:Image size="80" resid="Icon.80"/>
+                    </Icon>
+                    <Action xsi:type="ShowTaskpane">
+                      <SourceLocation resid="Taskpane.Url"/>
+                      <SupportsPinning>true</SupportsPinning>
+                    </Action>
+                  </Control>
+                </Group>
+              </OfficeTab>
+            </ExtensionPoint>
 
           </DesktopFormFactor>
         </Host>
@@ -134,14 +126,15 @@
           <bt:Url id="Taskpane.Url" DefaultValue="https://zealous-coast-0823e701e.2.azurestaticapps.net/taskpane.html"/>
         </bt:Urls>
         <bt:ShortStrings>
-          <bt:String id="Group.Label" DefaultValue="Otomatik Yanıt"/>
+          <bt:String id="Group.Label"  DefaultValue="Otomatik Yanıt"/>
           <bt:String id="Button.Label" DefaultValue="Otomatik Yanıt Yöneticisi"/>
         </bt:ShortStrings>
         <bt:LongStrings>
           <bt:String id="Button.Tooltip" DefaultValue="Otomatik Yanıt Yöneticisini Aç"/>
         </bt:LongStrings>
       </Resources>
-       <!-- SSO: EN SONDA (kök) -->
+
+      <!-- SSO -->
       <WebApplicationInfo>
         <Id>c2a8b650-50b2-446e-a8e9-bffa6698b77f</Id>
         <Resource>api://zealous-coast-0823e701e.2.azurestaticapps.net/c2a8b650-50b2-446e-a8e9-bffa6698b77f</Resource>
@@ -152,10 +145,7 @@
           <Scope>offline_access</Scope>
         </Scopes>
       </WebApplicationInfo>
-    </VersionOverrides>
-    <!-- === /Mail v1.1 === -->
-  </VersionOverrides>
-  <!-- === /Mail v1.0 === -->
 
- 
+    </VersionOverrides>
+  </VersionOverrides>
 </OfficeApp>
