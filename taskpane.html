@@ -674,6 +674,7 @@ Kind regards,
         let endDateText = "";
         if (oofSettings.scheduledEndDateTime) {
           const endDate = new Date(oofSettings.scheduledEndDateTime.dateTime);
+          endDate = new Date(endDate.getTime() + endDate.getTimezoneOffset() * 60 * 1000);
           console.log('fmtLocal(s):', fmtLocal(endDate));
           // console.log('oofSettings:', fmtLocal(s));
           endDateText = ` (${endDate.toLocaleDateString('tr-TR')} ${endDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} tarihine kadar)`;
