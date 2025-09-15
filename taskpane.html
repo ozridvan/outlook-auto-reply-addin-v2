@@ -671,12 +671,32 @@ Kind regards,
       btn.disabled = true; btn.textContent = "Ayarlanıyor...";
 
       try {
-        const user = await getUserProfile();
-        const contact = buildContactLines(selectedColleague);
+        const contact = buildContactLines(selectedColleague); // mevcut fonksiyon
         const startDisp = formatDisplayDate(sD, sT);
-        const endDisp = formatDisplayDate(eD, eT);
+        const endDisp   = formatDisplayDate(eD, eT);
+
+        const messageBodyHtml = `
+        <p>Sayın Yetkili,</p>
+        <p>${startDisp} – ${endDisp} tarihleri arasında <strong>yıllık izindeyim</strong> ve bu süre içinde e-postalarınıza yanıt veremeyeceğim.</p>
+        <p>Acil konularınız için <strong>${selectedColleague.name}</strong> ile
+          ${selectedColleague.email ? `<a href="mailto:${selectedColleague.email}">${selectedColleague.email}</a>` : ''}
+          ${selectedColleague.phone ? ` veya <a href="tel:${selectedColleague.phone.replace(/\s+/g,'')}">${selectedColleague.phone}</a>` : ''} 
+          üzerinden iletişime geçebilirsiniz.</p>
+        <p>Teşekkür eder, iyi çalışmalar dilerim.</p>
+        <p>Saygılarımla,<br>${user.displayName}<br>${positionLine || ''}<br>${user.companyName || 'Öztiryakiler'}</p>
+        <hr>
+        <p>Dear Sir/Madam,</p>
+        <p>I will be <strong>out of the office</strong> from ${startDisp} to ${endDisp} and will not be able to respond to your message during this period.</p>
+        <p>For urgent matters, please contact <strong>${selectedColleague.name}</strong>
+          ${selectedColleague.email ? ` at <a href="mailto:${selectedColleague.email}">${selectedColleague.email}</a>` : ''}
+          ${selectedColleague.phone ? ` or <a href="tel:${selectedColleague.phone.replace(/\s+/g,'')}">${selectedColleague.phone}</a>` : ''}.
+        </p>
+        <p>Kind regards,<br>${user.displayName}<br>${positionLine || ''}<br>${user.companyName || 'Öztiryakiler'}</p>
+        `;
+
+        const user = await getUserProfile();
         const positionLine = user.jobTitle || "";
-        const body = messageTemplate.body
+        const body = messageBodyHtml
           .replaceAll('{startDate}', startDisp)
           .replaceAll('{endDate}', endDisp)
           .replaceAll('{contactLine}', contact.tr)
