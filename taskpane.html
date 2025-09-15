@@ -674,8 +674,8 @@ Kind regards,
         let endDateText = "";
         if (oofSettings.scheduledEndDateTime) {
           const endDate = new Date(oofSettings.scheduledEndDateTime);
-          console.log('fmtLocal(s):', fmtLocal(s));
-          console.log('oofSettings:', fmtLocal(s));
+          console.log('fmtLocal(s):', fmtLocal(endDate));
+          // console.log('oofSettings:', fmtLocal(s));
           endDateText = ` (${endDate.toLocaleDateString('tr-TR')} ${endDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} tarihine kadar)`;
         } else if (dateObj) {
           endDateText = ` (${dateObj.toLocaleDateString('tr-TR')} ${dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} tarihine kadar)`;
