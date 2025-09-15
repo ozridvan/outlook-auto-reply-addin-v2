@@ -744,7 +744,7 @@ Kind regards,
 
         const messageBodyHtml = `
         <p>Sayın Yetkili,</p>
-        <p>${startDisp} – ${endDisp} tarihleri arasında <strong>yıllık izindeyim</strong> ve bu süre içinde e-postalarınıza yanıt veremeyeceğim.</p>
+        <p>E-postanız için teşekkür ederim. ${startDisp} – ${endDisp} tarihleri arasında <strong>yıllık izindeyim</strong> ve bu süre içinde e-postalarınıza yanıt veremeyeceğim.</p>
         <p>Acil konularınız için <strong>${selectedColleague.name}</strong> ile
           ${selectedColleague.email ? `<a href="mailto:${selectedColleague.email}">${selectedColleague.email}</a>` : ''}
           ${selectedColleague.phone ? ` veya <a href="tel:${selectedColleague.phone.replace(/\s+/g,'')}">${selectedColleague.phone}</a>` : ''} 
@@ -753,7 +753,7 @@ Kind regards,
         <p>Saygılarımla,<br>${user.displayName}<br>${positionLine || ''}<br>${user.companyName || 'Öztiryakiler'}</p>
         <hr>
         <p>Dear Sir/Madam,</p>
-        <p>I will be <strong>out of the office</strong> from ${startDisp} to ${endDisp} and will not be able to respond to your message during this period.</p>
+        <p>Thank you for your email. I will be  <strong>out of the office</strong> on annual leave from ${startDisp} to ${endDisp} and will not be able to respond to your message during this period.</p>
         <p>For urgent matters, please contact <strong>${selectedColleague.name}</strong>
           ${selectedColleague.email ? ` at <a href="mailto:${selectedColleague.email}">${selectedColleague.email}</a>` : ''}
           ${selectedColleague.phone ? ` or <a href="tel:${selectedColleague.phone.replace(/\s+/g,'')}">${selectedColleague.phone}</a>` : ''}.
@@ -762,13 +762,6 @@ Kind regards,
         `;
 
         const body = messageBodyHtml;
-          // .replaceAll('{startDate}', startDisp)
-          // .replaceAll('{endDate}', endDisp)
-          // .replaceAll('{contactLine}', contact.tr)
-          // .replaceAll('{contactLineEn}', contact.en)
-          // .replaceAll('{userName}', user.displayName || '')
-          // .replaceAll('{positionLine}', positionLine)
-          // .replaceAll('{company}', user.companyName || 'Öztiryakiler');
 
         await setOOFWithGraphMessage(body, sD, sT, eD, eT);
         updatePreview();
