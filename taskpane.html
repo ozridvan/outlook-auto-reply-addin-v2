@@ -543,7 +543,7 @@ Kind regards,
         if (!res.ok) throw new Error("Graph " + res.status);
         const u = await res.json();
         return {
-          displayName: u.displayName || 'Kullanıcı',
+          displayName: u.displayName || '',
           emailAddress: u.mail || u.userPrincipalName || '',
           jobTitle: u.jobTitle || '',
           companyName: u.companyName || 'Öztiryakiler'
@@ -551,7 +551,7 @@ Kind regards,
       } catch (e) {
         const up = Office?.context?.mailbox?.userProfile || {};
         return {
-          displayName: up.displayName || 'Kullanıcı',
+          displayName: up.displayName || '',
           emailAddress: up.emailAddress || '',
           jobTitle: up.jobTitle || '',
           companyName: 'Öztiryakiler'
@@ -580,7 +580,7 @@ Kind regards,
         .replaceAll('{endDate}', endDisp)
         .replaceAll('{contactLine}', contact.tr)
         .replaceAll('{contactLineEn}', contact.en)
-        .replaceAll('{userName}', up.displayName || 'Kullanıcı')
+        .replaceAll('{userName}', up.displayName || '')
         .replaceAll('{positionLine}', positionLine)
         .replaceAll('{company}', company);
 
@@ -635,11 +635,75 @@ Kind regards,
       });
     }
 
-    function showOofBannerUntil(dateObj) {
+    // Fetch current OOF status from Graph API
+    async function getOofStatus() {
+      try {
+        const token = await getGraphToken(GRAPH_SCOPES_OOF);
+        const res = await fetch("https://graph.microsoft.com/v1.0/me/mailboxSettings/automaticRepliesSetting", {
+          headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }
+        });
+        
+        if (!res.ok) {
+          console.error("Failed to fetch OOF status:", res.status);
+          return null;
+        }
+        
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        console.error("Error fetching OOF status:", error);
+        return null;
+      }
+    }
+
+    // Show OOF banner with actual status from API
+    async function showOofBannerUntil(dateObj) {
       const b = $("oofStatusBanner"), t = $("oofStatusText");
-      const d = dateObj.toLocaleDateString('tr-TR');
-      t.textContent = `📧 Otomatik yanıt şu anda aktif (${d} tarihine kadar)`;
-      b.style.display = "block";
+      
+      // Try to get actual OOF status from API
+      const oofSettings = await getOofStatus();
+      
+      if (oofSettings && (oofSettings.status === "enabled" || oofSettings.status === "scheduled")) {
+        // Use the end date from API if available
+        let endDateText = "";
+        if (oofSettings.scheduledEndDateTime) {
+          const endDate = new Date(oofSettings.scheduledEndDateTime.dateTime);
+          endDateText = ` (${endDate.toLocaleDateString('tr-TR')} tarihine kadar)`;
+        } else if (dateObj) {
+          endDateText = ` (${dateObj.toLocaleDateString('tr-TR')} tarihine kadar)`;
+        }
+        
+        t.textContent = `📧 Otomatik yanıt şu anda aktif${endDateText}`;
+        b.style.display = "block";
+      } else {
+        // Hide banner if no active OOF
+        b.style.display = "none";
+      }
+    }
+
+    // Check and show OOF status on app initialization
+    async function checkAndShowOofStatus() {
+      const b = $("oofStatusBanner"), t = $("oofStatusText");
+      
+      try {
+        const oofSettings = await getOofStatus();
+        
+        if (oofSettings && (oofSettings.status === "enabled" || oofSettings.status === "scheduled")) {
+          let endDateText = "";
+          if (oofSettings.scheduledEndDateTime) {
+            const endDate = new Date(oofSettings.scheduledEndDateTime.dateTime);
+            endDateText = ` (${endDate.toLocaleDateString('tr-TR')} tarihine kadar)`;
+          }
+          
+          t.textContent = `📧 Otomatik yanıt şu anda aktif${endDateText}`;
+          b.style.display = "block";
+        } else {
+          b.style.display = "none";
+        }
+      } catch (error) {
+        console.error("Error checking OOF status:", error);
+        b.style.display = "none";
+      }
     }
 
     /* =======================
@@ -730,6 +794,9 @@ Kind regards,
       $("lastUpdate").textContent = new Date().toLocaleDateString('tr-TR');
       $("autoReplyForm").addEventListener("submit", onSubmit);
       $("btnModalOk").addEventListener("click", () => { $("instructionsModal").style.display = "none"; });
+      
+      // Check and show current OOF status
+      await checkAndShowOofStatus();
     });
   </script>
 </body>
