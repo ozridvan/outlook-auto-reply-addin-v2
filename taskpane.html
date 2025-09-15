@@ -494,7 +494,7 @@ Kind regards,
       const handler = debounce(async () => {
         const q = input.value.trim();
         try {
-          if (!q) renderUsers(await searchPeople());
+          if (!q) renderUsers(await listUsersInitial());
           else renderUsers(await searchUsersPrefix(q, 25));
         } catch (e) { console.error("[users] hata:", e.message || e); }
       }, 300);
